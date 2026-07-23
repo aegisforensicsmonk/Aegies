@@ -75,15 +75,15 @@ export default function DashboardPage() {
         
         switch(payload.event_type) {
           case 'NEW_THREAT':
-            setThreatIndicators(prev => [payload.data, ...prev].slice(0, 10));
-            setThreatCount(prev => prev + 1);
-            setStats(prev => prev ? { ...prev, threats_detected: (prev.threats_detected || 0) + 1 } : prev);
+            setThreatIndicators((prev: any[]) => [payload.data, ...prev].slice(0, 10));
+            setThreatCount((prev: number) => prev + 1);
+            setStats((prev: any) => prev ? { ...prev, threats_detected: (prev.threats_detected || 0) + 1 } : prev);
             break;
           case 'NEW_AUDIT_LOG':
-            setRecentActivity(prev => [payload.data, ...prev].slice(0, 15));
+            setRecentActivity((prev: any[]) => [payload.data, ...prev].slice(0, 15));
             break;
           case 'CASE_UPDATED':
-            setCases(prev => {
+            setCases((prev: any[]) => {
               const exists = prev.some(c => c.id === payload.data.id);
               return exists
                 ? prev.map(c => c.id === payload.data.id ? payload.data : c)
