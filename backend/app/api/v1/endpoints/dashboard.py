@@ -75,9 +75,9 @@ async def get_threat_indicators(db: AsyncSession = Depends(get_db)):
         {
             "id": str(ioc.id),
             "value": ioc.value,
-            "ioc_type": ioc.ioc_type, # model uses ioc_type
+            "type": ioc.ioc_type, # mapping to what frontend mock-data uses
             "severity": ioc.severity,
-            "description": ioc.description,
+            "description": ioc.source, # mock-data doesn't use description but fallback to source
             "created_at": ioc.created_at.isoformat() + "Z" if ioc.created_at else None
         }
         for ioc in iocs
