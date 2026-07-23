@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 
 const GeoMap = dynamic(() => import('@/components/analysis/GeoMap'), { ssr: false, loading: () => <div className="h-[500px] bg-cyber-bg rounded-xl border border-cyber-border flex items-center justify-center animate-pulse"><Map className="w-16 h-16 text-cyber-muted/30" /></div> });
 
-const statusFilters = ['All', 'Open', 'In Progress', 'Closed', 'Archived'];
+const statusFilters = ['All', 'Active', 'Open', 'In Progress', 'Closed', 'Archived'];
 const severityFilters = ['All', 'Critical', 'High', 'Medium', 'Low'];
 
 export default function CasesPage() {
@@ -81,6 +81,33 @@ function CasesPageContent() {
       }
     };
     fetchCases();
+
+    // Establish WebSocket for real-time updates
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/dashboard`;
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.event_type === 'CASE_UPDATED') {
+          setCasesList(prev => {
+            const exists = prev.find(c => c.id === payload.data.id);
+            const updated = exists 
+              ? prev.map(c => c.id === payload.data.id ? payload.data : c)
+              : [payload.data, ...prev];
+            localStorage.setItem('cases_list', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      } catch (e) {
+        console.error("Error processing websocket message:", e);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -88,10 +115,20 @@ function CasesPageContent() {
       setShowNewCase(true);
       router.replace('/cases');
     }
+    if (searchParams.get('status') === 'active') {
+      setStatusFilter('Active');
+      // optional: replace URL to avoid sticky param
+      // router.replace('/cases');
+    }
   }, [searchParams, router]);
 
   const filteredCases = casesList.filter((c) => {
-    if (statusFilter !== 'All' && c.status !== statusFilter.toLowerCase().replace(' ', '_')) return false;
+    if (statusFilter === 'Active') {
+      if (c.status === 'closed' || c.status === 'archived') return false;
+    } else if (statusFilter !== 'All' && c.status !== statusFilter.toLowerCase().replace(' ', '_')) {
+      return false;
+    }
+    
     if (severityFilter !== 'All' && c.severity !== severityFilter.toLowerCase()) return false;
     if (searchQuery && !c.title.toLowerCase().includes(searchQuery.toLowerCase()) && !c.case_number.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;

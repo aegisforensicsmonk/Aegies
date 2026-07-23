@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FolderOpen, Database, AlertTriangle, ShieldCheck, TrendingUp, TrendingDown,
   Activity, Users, Clock, ArrowUpRight, BarChart3, Shield, Zap, Eye, Loader2
@@ -14,38 +14,69 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [threatIndicators, setThreatIndicators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Dynamic import to avoid SSR issues if any, but regular import is fine
-        const { mockDashboardStats, mockCases, mockAuditLogs, mockIOCs } = await import('@/data/mock-data');
+        const [statsRes, casesRes, activityRes, iocsRes] = await Promise.all([
+          fetch('/api/v1/dashboard/stats'),
+          fetch('/api/v1/cases'),
+          fetch('/api/v1/dashboard/recent-activity'),
+          fetch('/api/v1/dashboard/threat-indicators')
+        ]);
         
-        // Simulate network delay for effect
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const [statsData, casesData, activityData, iocsData] = await Promise.all([
+          statsRes.json(),
+          casesRes.json(),
+          activityRes.json(),
+          iocsRes.json()
+        ]);
         
-        setStats(mockDashboardStats);
-        setCases(mockCases);
-        
-        // Map audit logs to recent activity format
-        const activityData = mockAuditLogs.slice(0, 8).map(log => ({
-          id: log.id,
-          action: log.action,
-          user_name: log.user_name,
-          details: log.details,
-          timestamp: log.timestamp
-        }));
+        setStats(statsData);
+        setCases(casesData);
         setRecentActivity(activityData);
-        
-        setThreatIndicators(mockIOCs.slice(0, 5));
+        setThreatIndicators(iocsData);
       } catch (error) {
-        console.error("Failed to load dashboard data:", error);
+        console.error("Failed to fetch dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
     
     fetchData();
+
+    // Establish WebSocket for real-time updates
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/dashboard`;
+    ws.current = new WebSocket(wsUrl);
+    
+    ws.current.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        
+        switch(payload.event_type) {
+          case 'NEW_THREAT':
+            setThreatIndicators(prev => [payload.data, ...prev].slice(0, 10));
+            setStats(prev => prev ? { ...prev, threats_detected: (prev.threats_detected || 0) + 1 } : prev);
+            break;
+          case 'NEW_AUDIT_LOG':
+            setRecentActivity(prev => [payload.data, ...prev].slice(0, 15));
+            break;
+          case 'CASE_UPDATED':
+            setCases(prev => prev.map(c => c.id === payload.data.id ? payload.data : c));
+            break;
+        }
+      } catch (e) {
+        console.error("Error processing websocket message:", e);
+      }
+    };
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
   }, []);
 
   if (loading) {
@@ -58,7 +89,7 @@ export default function DashboardPage() {
   }
 
   const statCards = [
-    { label: 'Active Cases', value: stats?.active_cases?.toString() || '0', change: '+2 this month', trend: 'up', icon: FolderOpen, color: 'from-cyan-500 to-blue-600', shadow: 'shadow-cyan-500/20', href: '/cases' },
+    { label: 'Active Cases', value: stats?.active_cases?.toString() || '0', change: '+2 this month', trend: 'up', icon: FolderOpen, color: 'from-cyan-500 to-blue-600', shadow: 'shadow-cyan-500/20', href: '/cases?status=active' },
     { label: 'Evidence Items', value: stats?.total_evidence?.toString() || '0', change: '+12 this week', trend: 'up', icon: Database, color: 'from-purple-500 to-indigo-600', shadow: 'shadow-purple-500/20', href: '/evidence' },
     { label: 'Pending Analysis', value: stats?.pending_analysis?.toString() || '0', change: '-3 from yesterday', trend: 'down', icon: Clock, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
     { label: 'Threats Detected', value: stats?.threats_detected?.toString() || '0', change: '+15 this week', trend: 'up', icon: ShieldCheck, color: 'from-red-500 to-rose-600', shadow: 'shadow-red-500/20' },
@@ -180,7 +211,7 @@ export default function DashboardPage() {
               <FolderOpen className="w-5 h-5 text-cyber-accent" />
               Active Cases
             </h2>
-            <Link href="/cases" className="text-xs text-cyber-accent hover:text-cyber-accent-glow transition-colors flex items-center gap-1">
+            <Link href="/cases?status=active" className="text-xs text-cyber-accent hover:text-cyber-accent-glow transition-colors flex items-center gap-1">
               View All <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>

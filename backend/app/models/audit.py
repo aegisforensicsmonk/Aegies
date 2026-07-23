@@ -11,4 +11,5 @@ class AuditLog(Base):
     user_id = Column(String(100), index=True)
     action = Column(String(50))
     resource = Column(String(255))
+    details = Column(String(255))
     timestamp = Column(DateTime(timezone=True), default=datetime.utcnow, index=True)
