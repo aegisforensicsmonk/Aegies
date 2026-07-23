@@ -18,26 +18,28 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, casesRes, activityRes, iocsRes] = await Promise.all([
-          fetch('/api/v1/dashboard/stats'),
-          fetch('/api/v1/cases'),
-          fetch('/api/v1/dashboard/recent-activity'),
-          fetch('/api/v1/dashboard/threat-indicators')
-        ]);
+        // Dynamic import to avoid SSR issues if any, but regular import is fine
+        const { mockDashboardStats, mockCases, mockAuditLogs, mockIOCs } = await import('@/data/mock-data');
         
-        const [statsData, casesData, activityData, iocsData] = await Promise.all([
-          statsRes.json(),
-          casesRes.json(),
-          activityRes.json(),
-          iocsRes.json()
-        ]);
+        // Simulate network delay for effect
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        setStats(statsData);
-        setCases(casesData);
+        setStats(mockDashboardStats);
+        setCases(mockCases);
+        
+        // Map audit logs to recent activity format
+        const activityData = mockAuditLogs.slice(0, 8).map(log => ({
+          id: log.id,
+          action: log.action,
+          user_name: log.user_name,
+          details: log.details,
+          timestamp: log.timestamp
+        }));
         setRecentActivity(activityData);
-        setThreatIndicators(iocsData);
+        
+        setThreatIndicators(mockIOCs.slice(0, 5));
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        console.error("Failed to load dashboard data:", error);
       } finally {
         setLoading(false);
       }
