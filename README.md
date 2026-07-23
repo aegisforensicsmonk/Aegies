@@ -22,5 +22,5 @@ A comprehensive platform for cyber intelligence and investigation.
 ## Getting Started
 
 1. Clone the repository.
-2. Install dependencies in the `frontend` directory: `npm install`
-3. Run the development server: `npm run dev`
+2.after open terminal use this command :  .\start.bat
+3. it will start 
