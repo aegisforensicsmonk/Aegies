@@ -1,0 +1,7 @@
+version: "3"
+
+services:
+  osintfootprints:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.full

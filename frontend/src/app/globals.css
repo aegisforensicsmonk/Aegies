@@ -1,0 +1,182 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-cyber-border;
+  }
+
+  body {
+    @apply bg-cyber-bg text-cyber-text font-sans antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-cyber-bg;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-cyber-border-light rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-cyber-muted;
+  }
+
+  ::selection {
+    @apply bg-cyber-accent/30 text-white;
+  }
+}
+
+@layer components {
+  .cyber-card {
+    @apply bg-cyber-card border border-cyber-border rounded-xl p-5
+           backdrop-blur-sm transition-all duration-200
+           hover:border-cyber-border-light hover:shadow-lg hover:shadow-cyan-900/10;
+  }
+
+  .cyber-card-flat {
+    @apply bg-cyber-card border border-cyber-border rounded-xl p-5;
+  }
+
+  .cyber-input {
+    @apply w-full bg-cyber-surface border border-cyber-border rounded-lg px-4 py-2.5
+           text-cyber-text placeholder-cyber-muted
+           focus:outline-none focus:ring-2 focus:ring-cyber-accent/40 focus:border-cyber-accent/60
+           transition-all duration-200;
+  }
+
+  .cyber-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5
+           bg-cyber-accent text-black font-semibold rounded-lg
+           hover:bg-cyber-accent-glow active:scale-[0.98]
+           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .cyber-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5
+           bg-cyber-surface border border-cyber-border text-cyber-text font-medium rounded-lg
+           hover:bg-cyber-card hover:border-cyber-border-light active:scale-[0.98]
+           transition-all duration-150;
+  }
+
+  .cyber-btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5
+           bg-red-500/10 border border-red-500/30 text-red-400 font-medium rounded-lg
+           hover:bg-red-500/20 hover:border-red-500/50 active:scale-[0.98]
+           transition-all duration-150;
+  }
+
+  .cyber-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2
+           text-cyber-text-dim font-medium rounded-lg
+           hover:bg-cyber-card hover:text-cyber-text
+           transition-all duration-150;
+  }
+
+  .cyber-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-success {
+    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .badge-warning {
+    @apply bg-amber-500/15 text-amber-400 border border-amber-500/30;
+  }
+
+  .badge-danger {
+    @apply bg-red-500/15 text-red-400 border border-red-500/30;
+  }
+
+  .badge-info {
+    @apply bg-blue-500/15 text-blue-400 border border-blue-500/30;
+  }
+
+  .badge-purple {
+    @apply bg-purple-500/15 text-purple-400 border border-purple-500/30;
+  }
+
+  .badge-neutral {
+    @apply bg-slate-500/15 text-slate-400 border border-slate-500/30;
+  }
+
+  .badge-cyan {
+    @apply bg-cyan-500/15 text-cyan-400 border border-cyan-500/30;
+  }
+
+  .cyber-table {
+    @apply w-full text-sm;
+  }
+
+  .cyber-table thead {
+    @apply border-b border-cyber-border;
+  }
+
+  .cyber-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-cyber-muted uppercase tracking-wider;
+  }
+
+  .cyber-table td {
+    @apply px-4 py-3.5 text-cyber-text-dim;
+  }
+
+  .cyber-table tbody tr {
+    @apply border-b border-cyber-border/50 hover:bg-cyber-surface/50
+           transition-colors duration-150 cursor-pointer;
+  }
+
+  .cyber-tab {
+    @apply px-4 py-2.5 text-sm font-medium text-cyber-muted rounded-lg
+           hover:text-cyber-text hover:bg-cyber-surface
+           transition-all duration-150 whitespace-nowrap;
+  }
+
+  .cyber-tab-active {
+    @apply px-4 py-2.5 text-sm font-medium text-cyber-accent bg-cyber-accent/10
+           rounded-lg border border-cyber-accent/30
+           transition-all duration-150 whitespace-nowrap;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-active {
+    @apply bg-emerald-400 shadow-sm shadow-emerald-400/50;
+  }
+
+  .status-dot-warning {
+    @apply bg-amber-400 shadow-sm shadow-amber-400/50;
+  }
+
+  .status-dot-danger {
+    @apply bg-red-400 shadow-sm shadow-red-400/50;
+  }
+
+  .glass-panel {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl;
+  }
+
+  .hex-bg {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5l25 15v20L30 55 5 40V20z' fill='none' stroke='rgba(6,182,212,0.04)' stroke-width='0.5'/%3E%3C/svg%3E");
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.3s ease-out, slideUp 0.3s ease-out;
+  }
+}

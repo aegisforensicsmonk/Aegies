@@ -1,0 +1,18 @@
+    </div>
+    <footer class="navbar-default navbar-fixed-bottom">
+      <div class="container-fluid text-center footer">
+        <%
+        messages = [
+            "<i class='glyphicon glyphicon-flash'></i>&nbsp;&nbsp;<a target=_new href='#'>Welcome to OSINTFOOTPRINTS.</a>",
+            "<i class='glyphicon glyphicon-flash'></i>&nbsp;&nbsp;<a target=_new href='#'>OSINTFOOTPRINTS is an open source OSINT automation tool.</a>"
+        ]
+
+        import random
+        message = messages[random.randint(0, len(messages)-1)]
+        %>
+        <span>${message}</span>
+      </div>
+    </footer>
+
+    </body>
+</html>
