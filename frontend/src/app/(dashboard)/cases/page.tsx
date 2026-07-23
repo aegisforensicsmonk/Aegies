@@ -58,24 +58,14 @@ function CasesPageContent() {
   useEffect(() => {
     const fetchCases = async () => {
       try {
-        // Prototype Persistence: Check local storage first
-        const saved = localStorage.getItem('cases_list');
-        if (saved) {
-          setCasesList(JSON.parse(saved));
-          setLoading(false);
-          return;
-        }
-
         const response = await fetch('/api/v1/cases');
         if (!response.ok) throw new Error('Failed to fetch cases');
         const data = await response.json();
         setCasesList(data);
-        localStorage.setItem('cases_list', JSON.stringify(data));
       } catch (error) {
         console.error(error);
         const { mockCases } = await import('@/data/mock-data');
         setCasesList(mockCases);
-        localStorage.setItem('cases_list', JSON.stringify(mockCases));
       } finally {
         setLoading(false);
       }
@@ -96,7 +86,6 @@ function CasesPageContent() {
             const updated = exists 
               ? prev.map(c => c.id === payload.data.id ? payload.data : c)
               : [payload.data, ...prev];
-            localStorage.setItem('cases_list', JSON.stringify(updated));
             return updated;
           });
         }
@@ -163,7 +152,6 @@ function CasesPageContent() {
       const newCase = await response.json();
       const updatedCases = [newCase, ...casesList];
       setCasesList(updatedCases);
-      localStorage.setItem('cases_list', JSON.stringify(updatedCases));
       
       // Handle Evidence Upload if a file was selected
       if (selectedFile) {
