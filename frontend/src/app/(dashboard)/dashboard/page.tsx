@@ -43,6 +43,10 @@ export default function DashboardPage() {
           fetch('/api/v1/dashboard/threat-indicators', { cache: 'no-store' })
         ]);
         
+        if (!statsRes.ok || !casesRes.ok || !activityRes.ok || !iocsRes.ok) {
+          throw new Error('One or more dashboard API endpoints failed to load.');
+        }
+
         const [statsData, casesData, activityData, iocsData] = await Promise.all([
           statsRes.json(),
           casesRes.json(),
