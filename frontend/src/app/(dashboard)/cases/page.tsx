@@ -73,8 +73,16 @@ function CasesPageContent() {
     fetchCases();
 
     // Establish WebSocket for real-time updates
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/dashboard`;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    let wsUrl = '';
+    if (backendUrl) {
+      const wsProtocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:';
+      const host = backendUrl.replace(/^https?:\/\//, '');
+      wsUrl = `${wsProtocol}//${host}/api/v1/ws/dashboard`;
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}/api/v1/ws/dashboard`;
+    }
     const ws = new WebSocket(wsUrl);
     
     ws.onmessage = (event) => {

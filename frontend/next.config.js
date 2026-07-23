@@ -5,7 +5,7 @@ const nextConfig = {
     domains: ['localhost'],
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',
