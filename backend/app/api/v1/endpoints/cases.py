@@ -1,12 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import uuid
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import delete
+
+from app.db.session import get_db
+from app.models.cases import Case
 
 router = APIRouter()
 
-# Mock Databases for Demo
+# Mock Databases for fallback / seeding
 cases_db = [
     {
         "id": "case-001",
@@ -103,27 +109,103 @@ evidence_db = [
 ]
 
 @router.get("/", response_model=List[Dict[str, Any]])
-async def get_cases():
-    return cases_db
+async def get_cases(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Case).order_by(Case.created_at.desc()))
+    cases = result.scalars().all()
+    
+    if not cases:
+        # Seed mock data
+        for c in cases_db:
+            new_c = Case(
+                case_number=c["case_number"],
+                title=c["title"],
+                description=c["description"],
+                status=c["status"],
+                severity=c["severity"],
+                case_type=c["case_type"],
+                lead_investigator=c["lead_investigator"],
+                assigned_analysts=c["assigned_analysts"],
+                evidence_count=c["evidence_count"],
+                entity_count=c["entity_count"],
+                ioc_count=c["ioc_count"],
+                tags=c["tags"]
+            )
+            # overwrite created_at to match mock if needed
+            new_c.created_at = datetime.fromisoformat(c["created_at"].replace("Z", "+00:00")).replace(tzinfo=None)
+            db.add(new_c)
+        await db.commit()
+        
+        result = await db.execute(select(Case).order_by(Case.created_at.desc()))
+        cases = result.scalars().all()
+
+    # Format for JSON response
+    response = []
+    for c in cases:
+        response.append({
+            "id": str(c.id),
+            "case_number": c.case_number,
+            "title": c.title,
+            "description": c.description,
+            "status": c.status,
+            "severity": c.severity,
+            "case_type": c.case_type,
+            "lead_investigator": c.lead_investigator,
+            "assigned_analysts": c.assigned_analysts,
+            "created_at": c.created_at.isoformat() + "Z",
+            "updated_at": c.updated_at.isoformat() + "Z",
+            "evidence_count": c.evidence_count,
+            "entity_count": c.entity_count,
+            "ioc_count": c.ioc_count,
+            "tags": c.tags
+        })
+    return response
 
 @router.get("/{case_id}", response_model=Dict[str, Any])
-async def get_case(case_id: str):
-    for case in cases_db:
-        if case["id"] == case_id or case["case_number"] == case_id:
-            return case
-    raise HTTPException(status_code=404, detail="Case not found")
-
-@router.delete("/{case_id}")
-async def delete_case(case_id: str):
-    global cases_db, iocs_db
-    original_len = len(cases_db)
-    cases_db = [c for c in cases_db if c["id"] != case_id and c["case_number"] != case_id]
-    
-    if len(cases_db) == original_len:
+async def get_case(case_id: str, db: AsyncSession = Depends(get_db)):
+    # Try UUID first
+    try:
+        uid = uuid.UUID(case_id)
+        result = await db.execute(select(Case).where(Case.id == uid))
+        case = result.scalar_one_or_none()
+    except ValueError:
+        result = await db.execute(select(Case).where(Case.case_number == case_id))
+        case = result.scalar_one_or_none()
+        
+    if not case:
         raise HTTPException(status_code=404, detail="Case not found")
         
-    # Cascade delete IOCs
-    iocs_db = [i for i in iocs_db if i.get("case_id", "") != case_id]
+    return {
+        "id": str(case.id),
+        "case_number": case.case_number,
+        "title": case.title,
+        "description": case.description,
+        "status": case.status,
+        "severity": case.severity,
+        "case_type": case.case_type,
+        "lead_investigator": case.lead_investigator,
+        "assigned_analysts": case.assigned_analysts,
+        "created_at": case.created_at.isoformat() + "Z",
+        "updated_at": case.updated_at.isoformat() + "Z",
+        "evidence_count": case.evidence_count,
+        "entity_count": case.entity_count,
+        "ioc_count": case.ioc_count,
+        "tags": case.tags
+    }
+
+@router.delete("/{case_id}")
+async def delete_case(case_id: str, db: AsyncSession = Depends(get_db)):
+    try:
+        uid = uuid.UUID(case_id)
+        result = await db.execute(select(Case).where(Case.id == uid))
+    except ValueError:
+        result = await db.execute(select(Case).where(Case.case_number == case_id))
+        
+    case = result.scalar_one_or_none()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+        
+    await db.delete(case)
+    await db.commit()
     
     return {"status": "success", "message": f"Case {case_id} deleted permanently"}
 
@@ -135,36 +217,63 @@ class CaseCreate(BaseModel):
     tags: Optional[List[str]] = []
 
 @router.post("/", response_model=Dict[str, Any])
-async def create_case(case: CaseCreate):
-    new_case = {
-        "id": f"case-{str(uuid.uuid4())[:8]}",
-        "case_number": f"FIR/2026/0{len(cases_db) + 18}",
-        "title": case.title,
-        "description": case.description,
-        "status": "open",
-        "severity": case.severity,
-        "case_type": case.case_type,
-        "lead_investigator": {"id": "usr-001", "full_name": "Current User"},
-        "assigned_analysts": [],
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "updated_at": datetime.utcnow().isoformat() + "Z",
-        "evidence_count": 0,
-        "entity_count": 0,
-        "ioc_count": 0,
-        "tags": case.tags
-    }
-    cases_db.insert(0, new_case)
+async def create_case(case: CaseCreate, db: AsyncSession = Depends(get_db)):
+    # Calculate case number based on count
+    result = await db.execute(select(Case))
+    count = len(result.scalars().all())
     
-    # Audit log
-    audit_logs_db.insert(0, {
-        "id": f"al-{str(uuid.uuid4())[:8]}", 
-        "user_name": "Current User", 
-        "action": "CREATE", 
-        "details": f"Created case {new_case['case_number']}: {case.title}", 
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    })
+    new_case = Case(
+        case_number=f"FIR/{datetime.utcnow().year}/0{count + 1}",
+        title=case.title,
+        description=case.description,
+        status="open",
+        severity=case.severity,
+        case_type=case.case_type,
+        lead_investigator={"id": "usr-001", "full_name": "Current User"},
+        assigned_analysts=[],
+        tags=case.tags
+    )
     
-    return new_case
+    db.add(new_case)
+    await db.commit()
+    await db.refresh(new_case)
+    
+    # Import audit here to avoid circular imports if needed, or just insert
+    from app.models.audit import AuditLog
+    audit = AuditLog(
+        user_name="Current User",
+        action="CREATE",
+        details=f"Created case {new_case.case_number}: {new_case.title}"
+    )
+    db.add(audit)
+    await db.commit()
+    
+    # Also publish to Redis for WebSockets
+    try:
+        from app.core.redis import redis_client
+        import json
+        payload = {
+            "id": str(new_case.id),
+            "case_number": new_case.case_number,
+            "title": new_case.title,
+            "description": new_case.description,
+            "status": new_case.status,
+            "severity": new_case.severity,
+            "case_type": new_case.case_type,
+            "lead_investigator": new_case.lead_investigator,
+            "assigned_analysts": new_case.assigned_analysts,
+            "created_at": new_case.created_at.isoformat() + "Z",
+            "updated_at": new_case.updated_at.isoformat() + "Z",
+            "evidence_count": new_case.evidence_count,
+            "entity_count": new_case.entity_count,
+            "ioc_count": new_case.ioc_count,
+            "tags": new_case.tags
+        }
+        await redis_client.publish("dashboard_updates", json.dumps({"event_type": "CASE_UPDATED", "data": payload}))
+    except Exception as e:
+        print(f"Failed to publish to redis: {e}")
+
+    return payload
 
 class AnalyzeRequest(BaseModel):
     narrative: str

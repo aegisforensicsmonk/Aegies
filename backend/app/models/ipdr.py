@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Text, BigInteger
-from sqlalchemy.dialects.postgresql import UUID
+
 import uuid
 from .base import Base
 from datetime import datetime
@@ -7,8 +7,8 @@ from datetime import datetime
 class IPDRRecord(Base):
     __tablename__ = "ipdr_records"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    case_id = Column(UUID(as_uuid=True), ForeignKey('cases.id'), index=True)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    case_id = Column(String, ForeignKey('cases.id'), index=True)
     
     timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
     

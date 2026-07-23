@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from typing import Any
 from datetime import datetime
 
-from app.api import deps
 from app.core.redis import redis_client
 
 router = APIRouter()

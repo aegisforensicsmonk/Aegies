@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Boolean, JSON, Enum
-from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import relationship
 import uuid
 import datetime
@@ -8,7 +8,7 @@ from .base import Base
 class Subscriber(Base):
     __tablename__ = "subscribers"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     phone_number = Column(String(50), unique=True, index=True, nullable=False)
     imsi = Column(String(50), index=True)
     name = Column(String(255))
@@ -22,7 +22,7 @@ class Subscriber(Base):
 class CellTower(Base):
     __tablename__ = "cell_towers"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     cell_id = Column(String(100), unique=True, index=True, nullable=False)
     location_name = Column(String(500))
     latitude = Column(Float, nullable=False)
@@ -34,11 +34,11 @@ class CellTower(Base):
 class Call(Base):
     __tablename__ = "calls"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    case_id = Column(UUID(as_uuid=True), ForeignKey('cases.id'))
-    source_number_id = Column(UUID(as_uuid=True), ForeignKey('subscribers.id'))
-    destination_number_id = Column(UUID(as_uuid=True), ForeignKey('subscribers.id'))
-    cell_tower_id = Column(UUID(as_uuid=True), ForeignKey('cell_towers.id'))
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    case_id = Column(String, ForeignKey('cases.id'))
+    source_number_id = Column(String, ForeignKey('subscribers.id'))
+    destination_number_id = Column(String, ForeignKey('subscribers.id'))
+    cell_tower_id = Column(String, ForeignKey('cell_towers.id'))
     imei = Column(String(50), index=True)
     
     start_time = Column(DateTime, nullable=False, index=True)
@@ -53,9 +53,9 @@ class Call(Base):
 class InternetSession(Base):
     __tablename__ = "internet_sessions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    subscriber_id = Column(UUID(as_uuid=True), ForeignKey('subscribers.id'))
-    cell_tower_id = Column(UUID(as_uuid=True), ForeignKey('cell_towers.id'))
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    subscriber_id = Column(String, ForeignKey('subscribers.id'))
+    cell_tower_id = Column(String, ForeignKey('cell_towers.id'))
     
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime)
@@ -68,7 +68,7 @@ class InternetSession(Base):
 class Device(Base):
     __tablename__ = "devices"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     imei = Column(String(50), unique=True, index=True, nullable=False)
     model = Column(String(255))
     manufacturer = Column(String(255))

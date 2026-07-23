@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, DateTime, Float, JSON
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import relationship
 import uuid
 from app.models.base import Base
@@ -8,7 +8,7 @@ from app.models.base import Base
 class MalwareSample(Base):
     __tablename__ = "malware_samples"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     filename = Column(String, index=True)
     file_size = Column(Integer)
     md5 = Column(String, unique=True, index=True)

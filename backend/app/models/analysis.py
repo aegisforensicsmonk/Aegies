@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, DateTime, Float, JSON, ForeignKey, Boolean
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import relationship
 import uuid
 from app.models.base import Base
@@ -8,8 +8,8 @@ from app.models.base import Base
 class AnalysisRun(Base):
     __tablename__ = "analysis_runs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sample_id = Column(UUID(as_uuid=True), ForeignKey("malware_samples.id"), nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    sample_id = Column(String, ForeignKey("malware_samples.id"), nullable=False)
     
     # Environment info
     sandbox_env = Column(String) # e.g. "cape_win10_x64", "cape_win7_x86"
@@ -32,8 +32,8 @@ class TelemetryEvent(Base):
     """Normalized Canonical Timeline Event"""
     __tablename__ = "telemetry_events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    run_id = Column(UUID(as_uuid=True), ForeignKey("analysis_runs.id"), nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    run_id = Column(String, ForeignKey("analysis_runs.id"), nullable=False)
     
     timestamp = Column(Float, nullable=False) # Offset from start of run
     event_type = Column(String, nullable=False) # ProcessCreate, FileWrite, RegKeySet, NetworkConn
@@ -55,8 +55,8 @@ class AnalystVerdict(Base):
     """Human-in-the-loop feedback"""
     __tablename__ = "analyst_verdicts"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sample_id = Column(UUID(as_uuid=True), ForeignKey("malware_samples.id"), nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    sample_id = Column(String, ForeignKey("malware_samples.id"), nullable=False)
     
     analyst_id = Column(String, nullable=False)
     verdict = Column(String, nullable=False) # False Positive, True Positive, Unknown

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, DateTime
-from sqlalchemy.dialects.postgresql import UUID
+
 import uuid
 from .base import Base
 from datetime import datetime
@@ -7,8 +7,8 @@ from datetime import datetime
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(String(100), index=True)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_name = Column(String(100), index=True)
     action = Column(String(50))
     resource = Column(String(255))
     details = Column(String(255))
