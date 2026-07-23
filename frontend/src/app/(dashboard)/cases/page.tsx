@@ -58,7 +58,7 @@ function CasesPageContent() {
   useEffect(() => {
     const fetchCases = async () => {
       try {
-        const response = await fetch('/api/v1/cases');
+        const response = await fetch('/api/v1/cases', { cache: 'no-store' });
         if (!response.ok) throw new Error('Failed to fetch cases');
         const data = await response.json();
         setCasesList(data);

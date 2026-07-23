@@ -20,10 +20,10 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [statsRes, casesRes, activityRes, iocsRes] = await Promise.all([
-          fetch('/api/v1/dashboard/stats'),
-          fetch('/api/v1/cases'),
-          fetch('/api/v1/dashboard/recent-activity'),
-          fetch('/api/v1/dashboard/threat-indicators')
+          fetch('/api/v1/dashboard/stats', { cache: 'no-store' }),
+          fetch('/api/v1/cases', { cache: 'no-store' }),
+          fetch('/api/v1/dashboard/recent-activity', { cache: 'no-store' }),
+          fetch('/api/v1/dashboard/threat-indicators', { cache: 'no-store' })
         ]);
         
         const [statsData, casesData, activityData, iocsData] = await Promise.all([
