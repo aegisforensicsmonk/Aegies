@@ -45,12 +45,38 @@ export default function CaseDetailPage() {
   useEffect(() => {
     const fetchCase = async () => {
       try {
+        // First try to check local storage since cases page saves there
+        const saved = localStorage.getItem('cases_list');
+        if (saved) {
+          const casesList = JSON.parse(saved);
+          const found = casesList.find((c: any) => c.id === caseId);
+          if (found) {
+            setCaseData(found);
+            setLoading(false);
+            return;
+          }
+        }
+
         const res = await fetch(`/api/v1/cases/${caseId}`);
-        if (!res.ok) throw new Error('Case not found');
+        if (!res.ok) throw new Error('Case not found in API');
         const data = await res.json();
         setCaseData(data);
       } catch (err: any) {
-        setError(err.message || 'Failed to load case');
+        console.error(err);
+        // Fallback to mock data
+        import('@/data/mock-data').then(({ mockCases }) => {
+          const found = mockCases.find(c => c.id === caseId);
+          if (found) {
+            setCaseData(found);
+          } else {
+            setError('Case not found');
+          }
+        }).catch(() => {
+          setError('Failed to load case');
+        }).finally(() => {
+          setLoading(false);
+        });
+        return; // Early return to avoid duplicate setLoading
       } finally {
         setLoading(false);
       }
