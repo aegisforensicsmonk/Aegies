@@ -1,0 +1,14 @@
+[build]
+  base = "frontend"
+  publish = ".next"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Redirect /api/* calls to the backend API service
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-api-url.com/api/:splat"
+  status = 200
+  force = true
