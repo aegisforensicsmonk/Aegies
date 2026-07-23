@@ -180,7 +180,7 @@ function OSINTContent() {
         </div>
         
         <iframe 
-          src={process.env.NEXT_PUBLIC_OSINT_URL || "http://localhost:5001"} 
+          src={process.env.NEXT_PUBLIC_OSINT_URL || "http://127.0.0.1:5001"} 
           className="h-full border-0 relative z-10"
           style={{ width: 'calc(100% + 18px)', paddingRight: '18px' }}
           title="osintfootprints OSINT Interface"
