@@ -39,10 +39,14 @@ export default function CaseDetailPage() {
   const caseId = params.id as string;
   const [activeTab, setActiveTab] = useState('overview');
   const [caseData, setCaseData] = useState<any>(null);
+  const [evidenceList, setEvidenceList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const savedEvidence = localStorage.getItem('evidence_list');
+    setEvidenceList(savedEvidence ? JSON.parse(savedEvidence) : mockEvidence);
+
     const fetchCase = async () => {
       try {
         const res = await fetch(`/api/v1/cases/${caseId}`);
@@ -82,7 +86,7 @@ export default function CaseDetailPage() {
     );
   }
 
-  const caseEvidence = mockEvidence.filter(e => e.case_id === caseData.id || e.case_id === caseData.case_number);
+  const caseEvidence = evidenceList.filter(e => e.case_id === caseData.id || e.case_id === caseData.case_number);
   const caseEntities = mockEntities.filter(e => e.case_id === caseData.id || e.case_id === caseData.case_number);
   const caseTimeline = mockTimeline.filter(t => t.case_id === caseData.id || t.case_id === caseData.case_number);
   const caseIOCs = mockIOCs.filter(i => i.case_id === caseData.id || i.case_id === caseData.case_number);

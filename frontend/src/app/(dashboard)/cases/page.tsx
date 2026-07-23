@@ -8,7 +8,7 @@ import {
   Calendar, Tag, Users, MoreHorizontal, X, MapPin, Sparkles, PenLine, UploadCloud, LayoutGrid, Map, Trash2
 } from 'lucide-react';
 import { cn, formatDate, getStatusColor, getSeverityIcon } from '@/lib/utils';
-import { mockCases, mockEvidence, mockEntities, mockIOCs } from '@/data/mock-data';
+import { mockEvidence, mockEntities, mockIOCs } from '@/data/mock-data';
 import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 
@@ -64,8 +64,8 @@ function CasesPageContent() {
         setCasesList(data);
       } catch (error) {
         console.error(error);
-        const { mockCases } = await import('@/data/mock-data');
-        setCasesList(mockCases);
+        setCasesList([]);
+        toast.error('Unable to load saved cases. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -364,8 +364,12 @@ function CasesPageContent() {
                   onClick={async (e) => {
                     e.preventDefault();
                     try {
-                      // Delete from backend API (optional for prototype)
-                      await fetch(`/api/v1/cases/${caseItem.id}`, { method: 'DELETE' }).catch(() => {});
+                      const response = await fetch(`/api/v1/cases/${caseItem.id}`, {
+                        method: 'DELETE',
+                      });
+                      if (!response.ok) {
+                        throw new Error(`Failed to delete case (${response.status})`);
+                      }
                       
                       const updatedCases = casesList.filter(c => c.id !== caseItem.id);
                       setCasesList(updatedCases);

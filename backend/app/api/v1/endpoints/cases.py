@@ -112,31 +112,6 @@ evidence_db = [
 async def get_cases(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Case).order_by(Case.created_at.desc()))
     cases = result.scalars().all()
-    
-    if not cases:
-        # Seed mock data
-        for c in cases_db:
-            new_c = Case(
-                case_number=c["case_number"],
-                title=c["title"],
-                description=c["description"],
-                status=c["status"],
-                severity=c["severity"],
-                case_type=c["case_type"],
-                lead_investigator=c["lead_investigator"],
-                assigned_analysts=c["assigned_analysts"],
-                evidence_count=c["evidence_count"],
-                entity_count=c["entity_count"],
-                ioc_count=c["ioc_count"],
-                tags=c["tags"]
-            )
-            # overwrite created_at to match mock if needed
-            new_c.created_at = datetime.fromisoformat(c["created_at"].replace("Z", "+00:00")).replace(tzinfo=None)
-            db.add(new_c)
-        await db.commit()
-        
-        result = await db.execute(select(Case).order_by(Case.created_at.desc()))
-        cases = result.scalars().all()
 
     # Format for JSON response
     response = []
@@ -165,7 +140,7 @@ async def get_case(case_id: str, db: AsyncSession = Depends(get_db)):
     # Try UUID first
     try:
         uid = uuid.UUID(case_id)
-        result = await db.execute(select(Case).where(Case.id == uid))
+        result = await db.execute(select(Case).where(Case.id == str(uid)))
         case = result.scalar_one_or_none()
     except ValueError:
         result = await db.execute(select(Case).where(Case.case_number == case_id))
@@ -196,7 +171,7 @@ async def get_case(case_id: str, db: AsyncSession = Depends(get_db)):
 async def delete_case(case_id: str, db: AsyncSession = Depends(get_db)):
     try:
         uid = uuid.UUID(case_id)
-        result = await db.execute(select(Case).where(Case.id == uid))
+        result = await db.execute(select(Case).where(Case.id == str(uid)))
     except ValueError:
         result = await db.execute(select(Case).where(Case.case_number == case_id))
         

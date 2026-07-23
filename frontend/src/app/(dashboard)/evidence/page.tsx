@@ -78,7 +78,9 @@ export default function EvidencePage() {
         acquired_at: new Date().toISOString()
       };
       
-      setEvidenceList([newEvidence, ...evidenceList]);
+      const updatedEvidence = [newEvidence, ...evidenceList];
+      setEvidenceList(updatedEvidence);
+      localStorage.setItem('evidence_list', JSON.stringify(updatedEvidence));
       setIsUploading(false);
       setShowUpload(false);
       setSelectedFile(null);

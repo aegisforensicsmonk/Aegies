@@ -6,17 +6,34 @@ import {
   Activity, Users, Clock, ArrowUpRight, BarChart3, Shield, Zap, Eye, Loader2
 } from 'lucide-react';
 import { cn, formatDateTime, timeAgo, getStatusColor, getSeverityIcon } from '@/lib/utils';
+import { mockEvidence } from '@/data/mock-data';
 import Link from 'next/link';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [cases, setCases] = useState<any[]>([]);
+  const [evidenceCount, setEvidenceCount] = useState(mockEvidence.length);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [threatIndicators, setThreatIndicators] = useState<any[]>([]);
+  const [threatCount, setThreatCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    const loadEvidenceCount = () => {
+      const savedEvidence = localStorage.getItem('evidence_list');
+      if (!savedEvidence) return;
+
+      try {
+        setEvidenceCount(JSON.parse(savedEvidence).length);
+      } catch {
+        console.error('Unable to read saved Evidence Vault items.');
+      }
+    };
+
+    loadEvidenceCount();
+    window.addEventListener('storage', loadEvidenceCount);
+
     const fetchData = async () => {
       try {
         const [statsRes, casesRes, activityRes, iocsRes] = await Promise.all([
@@ -36,7 +53,8 @@ export default function DashboardPage() {
         setStats(statsData);
         setCases(casesData);
         setRecentActivity(activityData);
-        setThreatIndicators(iocsData);
+        setThreatIndicators(iocsData.items || []);
+        setThreatCount(iocsData.total || 0);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -58,13 +76,19 @@ export default function DashboardPage() {
         switch(payload.event_type) {
           case 'NEW_THREAT':
             setThreatIndicators(prev => [payload.data, ...prev].slice(0, 10));
+            setThreatCount(prev => prev + 1);
             setStats(prev => prev ? { ...prev, threats_detected: (prev.threats_detected || 0) + 1 } : prev);
             break;
           case 'NEW_AUDIT_LOG':
             setRecentActivity(prev => [payload.data, ...prev].slice(0, 15));
             break;
           case 'CASE_UPDATED':
-            setCases(prev => prev.map(c => c.id === payload.data.id ? payload.data : c));
+            setCases(prev => {
+              const exists = prev.some(c => c.id === payload.data.id);
+              return exists
+                ? prev.map(c => c.id === payload.data.id ? payload.data : c)
+                : [payload.data, ...prev];
+            });
             break;
         }
       } catch (e) {
@@ -73,6 +97,7 @@ export default function DashboardPage() {
     };
 
     return () => {
+      window.removeEventListener('storage', loadEvidenceCount);
       if (ws.current) {
         ws.current.close();
       }
@@ -88,11 +113,12 @@ export default function DashboardPage() {
     );
   }
 
+  const activeCaseCount = cases.filter(c => c.status === 'open' || c.status === 'in_progress').length;
   const statCards = [
-    { label: 'Active Cases', value: stats?.active_cases?.toString() || '0', change: '+2 this month', trend: 'up', icon: FolderOpen, color: 'from-cyan-500 to-blue-600', shadow: 'shadow-cyan-500/20', href: '/cases?status=active' },
-    { label: 'Evidence Items', value: stats?.total_evidence?.toString() || '0', change: '+12 this week', trend: 'up', icon: Database, color: 'from-purple-500 to-indigo-600', shadow: 'shadow-purple-500/20', href: '/evidence' },
-    { label: 'Pending Analysis', value: stats?.pending_analysis?.toString() || '0', change: '-3 from yesterday', trend: 'down', icon: Clock, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
-    { label: 'Threats Detected', value: stats?.threats_detected?.toString() || '0', change: '+15 this week', trend: 'up', icon: ShieldCheck, color: 'from-red-500 to-rose-600', shadow: 'shadow-red-500/20' },
+    { label: 'Active Cases', value: activeCaseCount.toString(), change: '+2 this month', trend: 'up', icon: FolderOpen, color: 'from-cyan-500 to-blue-600', shadow: 'shadow-cyan-500/20', href: '/cases?status=active' },
+    { label: 'Evidence Items', value: evidenceCount.toString(), change: '+12 this week', trend: 'up', icon: Database, color: 'from-purple-500 to-indigo-600', shadow: 'shadow-purple-500/20', href: '/evidence' },
+    { label: 'Pending Analysis', value: activeCaseCount.toString(), change: '-3 from yesterday', trend: 'down', icon: Clock, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20', href: '/cases?status=active' },
+    { label: 'Threats Detected', value: threatCount.toString(), change: '+15 this week', trend: 'up', icon: ShieldCheck, color: 'from-red-500 to-rose-600', shadow: 'shadow-red-500/20', href: '#threat-indicators' },
   ];
 
   const totalCases = cases.length;
@@ -100,7 +126,7 @@ export default function DashboardPage() {
   const highCount = cases.filter(c => c.severity === 'high').length;
   const mediumCount = cases.filter(c => c.severity === 'medium').length;
   const lowCount = cases.filter(c => c.severity === 'low').length;
-  const openCount = cases.filter(c => c.status === 'open' || c.status === 'in_progress').length;
+  const openCount = activeCaseCount;
   const closedCount = cases.filter(c => c.status === 'closed').length;
 
   const uniqueAnalystsMap = new Map();
@@ -284,7 +310,7 @@ export default function DashboardPage() {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Threat IOC Summary */}
-        <div className="cyber-card-flat">
+        <div id="threat-indicators" className="cyber-card-flat scroll-mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-400" />

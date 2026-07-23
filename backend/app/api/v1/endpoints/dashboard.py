@@ -29,13 +29,8 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count(MalwareSample.id)))
     total_evidence = result.scalar() or 0
     
-    # Calculate pending analysis (open cases + queued/analyzing evidence)
-    result = await db.execute(select(func.count(Case.id)).where(Case.status == "open"))
-    open_cases = result.scalar() or 0
-    
-    result = await db.execute(select(func.count(MalwareSample.id)).where(MalwareSample.status.in_(["QUEUED", "ANALYZING"])))
-    processing_evidence = result.scalar() or 0
-    pending_analysis = open_cases + processing_evidence
+    # Pending analysis mirrors the active-case queue: open and in-progress cases.
+    pending_analysis = active_cases
     
     # Calculate threats detected
     result = await db.execute(select(func.count(ThreatIndicator.id)))
@@ -67,18 +62,23 @@ async def get_recent_activity(db: AsyncSession = Depends(get_db)):
 
 @router.get("/threat-indicators")
 async def get_threat_indicators(db: AsyncSession = Depends(get_db)):
+    total_result = await db.execute(select(func.count(ThreatIndicator.id)))
+    total = total_result.scalar() or 0
+
     result = await db.execute(select(ThreatIndicator).order_by(ThreatIndicator.created_at.desc()).limit(6))
     iocs = result.scalars().all()
     
-    # Format to match the frontend expectations
-    return [
-        {
-            "id": str(ioc.id),
-            "value": ioc.value,
-            "ioc_type": ioc.ioc_type, # frontend uses ioc_type
-            "severity": ioc.severity,
-            "description": ioc.source,
-            "created_at": ioc.created_at.isoformat() + "Z" if ioc.created_at else None
-        }
-        for ioc in iocs
-    ]
+    return {
+        "total": total,
+        "items": [
+            {
+                "id": str(ioc.id),
+                "value": ioc.value,
+                "ioc_type": ioc.ioc_type, # frontend uses ioc_type
+                "severity": ioc.severity,
+                "description": ioc.source,
+                "created_at": ioc.created_at.isoformat() + "Z" if ioc.created_at else None
+            }
+            for ioc in iocs
+        ]
+    }
