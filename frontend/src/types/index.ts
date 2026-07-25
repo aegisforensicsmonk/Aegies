@@ -142,6 +142,8 @@ export interface IPDRRecord {
   case_id: string;
   source_number: string;
   destination_number: string;
+  source_ip?: string;
+  destination_ip?: string;
   call_type: 'voice' | 'sms' | 'data';
   start_time: string;
   end_time: string;

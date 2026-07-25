@@ -37,11 +37,11 @@ graph TD
 
 ## 2. Component Architecture
 
-### Frontend Component (Port 3000)
-- **Framework**: Next.js 14+ (or Vite configuration as per `docker-compose.yml`)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Purpose**: Serves the user interface, manages client-side state, and visualizes complex data using libraries like Cytoscape.js and Leaflet.
+### Frontend Components (Port 3000 / 7860)
+The codebase includes two separate frontend implementations:
+- **Next.js 14 Frontend** (located in `/frontend`): Running on **Port 3000** locally (`start.bat`) or **Port 7860** in production/Hugging Face (`start.sh`). Written in TypeScript and styled with Tailwind CSS.
+- **Vite React Frontend** (located in `/frontend-vite`): Running on **Port 3000** via Docker Compose (`docker-compose.yml`). Built with React 19, Vite 8, Tailwind CSS, and TypeScript.
+- **Key UI Packages**: Uses shadcn/ui components, Cytoscape.js for entity relationship visualization, and Leaflet for geographical mapping.
 
 ### Backend Component (Port 8000)
 - **Framework**: FastAPI

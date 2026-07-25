@@ -1,21 +1,33 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bot, Sparkles, Cpu, AlertTriangle } from 'lucide-react';
+import { Bot, Sparkles, Cpu, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function AISummary() {
+interface AISummaryProps {
+  fileName?: string;
+  threatLevel?: string;
+}
+
+export default function AISummary({ fileName = 'svchost_update.exe', threatLevel = 'High Threat' }: AISummaryProps) {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState('');
 
   useEffect(() => {
+    setLoading(true);
     // Simulate AI generation time
     const timer = setTimeout(() => {
-      setSummary("The analyzed sample (svchost_update.exe) demonstrates behaviors strongly aligning with the ALPHV/BlackCat ransomware family. Written in Rust, it establishes persistence via the HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run registry key. The executable exhibits high-entropy sections suggesting packing, and spawns a child process for intermittent file encryption using AES-256. Network telemetry indicates communication with a known malicious IP (103.235.46.18). After encryption, it drops the standard BlackCat ransom note.");
+      if (threatLevel === 'High Threat') {
+        setSummary(`The analyzed sample (${fileName}) demonstrates behaviors strongly aligning with the ALPHV/BlackCat ransomware family. Written in Rust, it establishes persistence via the HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run registry key. The executable exhibits high-entropy sections suggesting packing, and spawns a child process for intermittent file encryption using AES-256. Network telemetry indicates communication with a known malicious IP (103.235.46.18). After encryption, it drops the standard BlackCat ransom note.`);
+      } else if (threatLevel === 'Suspicious') {
+        setSummary(`The analyzed sample (${fileName}) exhibits anomalous execution patterns. While it doesn't perfectly match known ransomware signatures, it attempts to modify system configuration and initiates unexpected outbound network connections. Its behavior deviates from standard application baselines and warrants further manual inspection by an analyst.`);
+      } else {
+        setSummary(`The analyzed sample (${fileName}) executed within expected parameters. No malicious payloads, suspicious execution patterns, unauthorized registry modifications, or anomalous network connections were detected during dynamic sandbox execution. The file appears benign.`);
+      }
       setLoading(false);
-    }, 2500);
+    }, 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [fileName, threatLevel]);
 
   return (
     <div className="bg-cyber-surface/30 rounded-lg border border-cyber-accent/30 p-4 relative overflow-hidden">
@@ -46,10 +58,24 @@ export default function AISummary() {
             <p className="text-xs text-cyber-text-dim leading-relaxed">
               {summary}
             </p>
-            <div className="flex items-center gap-2 mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <span className="text-[10px] text-red-200">Critical: System recovery inhibited (T1490). Immediate isolation recommended.</span>
-            </div>
+            {threatLevel === 'High Threat' && (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded">
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+                <span className="text-[10px] text-red-200">Critical: System recovery inhibited (T1490). Immediate isolation recommended.</span>
+              </div>
+            )}
+            {threatLevel === 'Suspicious' && (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded">
+                <ShieldAlert className="w-4 h-4 text-amber-400" />
+                <span className="text-[10px] text-amber-200">Warning: Anomalous behavior detected. Monitor endpoints.</span>
+              </div>
+            )}
+            {threatLevel === 'Safe' && (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded">
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+                <span className="text-[10px] text-emerald-200">Safe: No threats detected.</span>
+              </div>
+            )}
           </div>
         )}
       </div>

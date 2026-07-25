@@ -37,6 +37,59 @@ export const downloadReport = (
     narrative = `The Aegis AI analysis engine has determined this file to be <b>Safe</b>. No malicious payloads, suspicious execution patterns, or unauthorized network connections were detected during the dynamic sandbox execution.`;
   }
 
+  // Pseudo-random hash generator for mock data
+  const pseudoRandomHash = (str: string, len: number) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    let hex = Math.abs(hash).toString(16).padStart(8, '0');
+    while (hex.length < len) hex += hex;
+    return hex.substring(0, len);
+  };
+  
+  const sha256 = pseudoRandomHash(fileName + "sha", 64);
+  const md5 = pseudoRandomHash(fileName + "md5", 32);
+
+  // MITRE ATT&CK Mappings
+  let mitreRows = '';
+  if (threatLevel === 'High Threat') {
+    mitreRows = `
+      <tr><td>T1486</td><td>Data Encrypted for Impact</td><td>Ransomware payload execution</td></tr>
+      <tr><td>T1059.001</td><td>PowerShell</td><td>Execution of encoded scripts</td></tr>
+      <tr><td>T1106</td><td>Native API</td><td>Direct memory allocation / thread creation</td></tr>
+      <tr><td>T1490</td><td>Inhibit System Recovery</td><td>vssadmin.exe delete shadows</td></tr>
+      <tr><td>T1571</td><td>Non-Standard Port</td><td>C2 communication over port 443 masking</td></tr>
+    `;
+  } else if (threatLevel === 'Suspicious') {
+    mitreRows = `
+      <tr><td>T1059</td><td>Command and Scripting Interpreter</td><td>Spawned unusual child process</td></tr>
+      <tr><td>T1204.002</td><td>Malicious File</td><td>User execution of suspicious attachment</td></tr>
+      <tr><td>T1012</td><td>Query Registry</td><td>Probing system configuration</td></tr>
+    `;
+  } else {
+    mitreRows = `<tr><td colspan="3" style="text-align:center; color:#6b7280; font-family:sans-serif;">No malicious techniques observed</td></tr>`;
+  }
+
+  // Indicators of Compromise (IOCs)
+  let iocRows = '';
+  if (threatLevel === 'High Threat') {
+    iocRows = `
+      <tr><td>File Hash (SHA256)</td><td>${sha256}</td></tr>
+      <tr><td>File Hash (MD5)</td><td>${md5}</td></tr>
+      <tr><td>IPv4 Address</td><td>185.12.5.44</td></tr>
+      <tr><td>IPv4 Address</td><td>45.83.122.90</td></tr>
+      <tr><td>Dropped File</td><td>C:\\Users\\Admin\\AppData\\Local\\Temp\\READ_ME_NOW.txt</td></tr>
+      <tr><td>Registry Key</td><td>HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Updates</td></tr>
+    `;
+  } else if (threatLevel === 'Suspicious') {
+    iocRows = `
+      <tr><td>File Hash (SHA256)</td><td>${sha256}</td></tr>
+      <tr><td>Domain Name</td><td>api.telemetry-update-check.com</td></tr>
+      <tr><td>Created Process</td><td>powershell.exe -ExecutionPolicy Bypass</td></tr>
+    `;
+  } else {
+    iocRows = `<tr><td colspan="2" style="text-align:center; color:#6b7280; font-family:sans-serif;">No indicators of compromise generated</td></tr>`;
+  }
+
   const reportHtml = `
     <!DOCTYPE html>
     <html>
@@ -60,7 +113,7 @@ export const downloadReport = (
             border-radius: 4px;
           }
           h1 { color: #1a1a1a; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;}
-          h2 { color: ${color}; font-size: 18px; margin-top: 30px;}
+          h2 { color: ${color}; font-size: 18px; margin-top: 40px; border-bottom: 1px solid #eaeaea; padding-bottom: 5px;}
           .meta-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -105,6 +158,7 @@ export const downloadReport = (
             color: white;
             background: ${color};
           }
+          .mitre-id { font-weight: bold; color: #2563eb; }
         </style>
       </head>
       <body>
@@ -134,6 +188,42 @@ export const downloadReport = (
           <div class="narrative">
             <p>${narrative}</p>
           </div>
+
+          <h2>File Metadata</h2>
+          <table>
+            <tbody>
+              <tr><td style="width: 150px; font-weight: bold; font-family: sans-serif;">SHA-256</td><td>${sha256}</td></tr>
+              <tr><td style="font-weight: bold; font-family: sans-serif;">MD5</td><td>${md5}</td></tr>
+              <tr><td style="font-weight: bold; font-family: sans-serif;">File Name</td><td>${reportName}</td></tr>
+            </tbody>
+          </table>
+
+          <h2>Indicators of Compromise (IOCs)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Indicator</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${iocRows}
+            </tbody>
+          </table>
+
+          <h2>MITRE ATT&CK Observed Techniques</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Technique Name</th>
+                <th>Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${mitreRows}
+            </tbody>
+          </table>
 
           <h2>Behavioral Evidence & Telemetry</h2>
           <table>

@@ -29,14 +29,22 @@ export default function RansomwarePage() {
   const finding = mockRansomware[0];
   const ransomwareIOCs = mockIOCs.filter(i => i.case_id === 'case-002');
   
+  const [analysisStatus, setAnalysisStatus] = useState<'IDLE' | 'ANALYZING' | 'COMPLETE'>('COMPLETE');
+  const [currentFile, setCurrentFile] = useState<{name: string, size: number}>({ name: 'svchost_update.exe', size: 2845120 });
+  const [analysisResult, setAnalysisResult] = useState<{threatLevel: string, score: number, logs: any[]}>({
+    threatLevel: 'High Threat',
+    score: 98,
+    logs: []
+  });
+  
   // Simulated upload response with static analysis telemetry
   const recentUpload = {
-    filename: 'svchost_update.exe',
-    file_size: 2845120,
-    status: 'ANALYSIS COMPLETE',
-    entropy: 7.91,
-    yara_matches: ['Ransomware_BlackCat_ALPHV', 'High_Entropy_Packed', 'Rust_Compiled_Binary'],
-    pe_headers: { machine: 'AMD64', sections: 6, timestamp: '2026-06-25T14:32:11Z' },
+    filename: currentFile.name,
+    file_size: currentFile.size,
+    status: analysisStatus === 'ANALYZING' ? 'ANALYZING...' : 'ANALYSIS COMPLETE',
+    entropy: analysisStatus === 'ANALYZING' ? 0 : (analysisResult.threatLevel === 'Safe' ? 4.12 : 7.91),
+    yara_matches: analysisStatus === 'ANALYZING' ? [] : (analysisResult.threatLevel === 'Safe' ? ['Standard_PE'] : ['Ransomware_BlackCat_ALPHV', 'High_Entropy_Packed', 'Rust_Compiled_Binary']),
+    pe_headers: { machine: 'AMD64', sections: 6, timestamp: new Date().toISOString() },
     sha256: 'd0b4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4'
   };
 
@@ -52,7 +60,12 @@ export default function RansomwarePage() {
           <p className="text-sm text-cyber-muted mt-1">Ransomware IOC analysis, family identification, and decryptor lookup</p>
         </div>
         <div className="flex gap-2">
-          <ReportGenerator />
+          <ReportGenerator 
+            fileName={currentFile.name} 
+            threatLevel={analysisResult.threatLevel} 
+            confidenceScore={analysisResult.score} 
+            logs={analysisResult.logs} 
+          />
           <button onClick={() => document.getElementById('sandbox')?.scrollIntoView({ behavior: 'smooth' })} className="cyber-btn-primary text-sm flex items-center gap-2">
             <Upload className="w-4 h-4" /> Upload Sample
           </button>
@@ -110,7 +123,7 @@ export default function RansomwarePage() {
       </div>
 
       {/* AI Summary */}
-      <AISummary />
+      <AISummary fileName={currentFile.name} threatLevel={analysisResult.threatLevel} />
 
       {/* Static Analysis Telemetry */}
       <div className="cyber-card-flat border-cyber-accent/20">
@@ -168,7 +181,20 @@ export default function RansomwarePage() {
 
       {/* Interactive Sandbox Execution */}
       <div id="sandbox" className="mb-6">
-        <SandboxView />
+        <SandboxView 
+          onAnalysisStart={(fileName, fileSize) => {
+            setCurrentFile({ name: fileName, size: fileSize });
+            setAnalysisStatus('ANALYZING');
+          }}
+          onAnalysisComplete={(data) => {
+            setAnalysisResult({
+              threatLevel: data.threatLevel,
+              score: data.confidenceScore,
+              logs: data.logs
+            });
+            setAnalysisStatus('COMPLETE');
+          }}
+        />
       </div>
 
       {/* Dynamic Analysis Telemetry */}

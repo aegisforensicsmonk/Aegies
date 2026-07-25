@@ -2,8 +2,21 @@
 
 import React, { useState } from 'react';
 import { Download, FileText, FileJson, Loader2 } from 'lucide-react';
+import { downloadReport } from '@/lib/report-generator';
 
-export default function ReportGenerator() {
+interface ReportGeneratorProps {
+  fileName?: string;
+  threatLevel?: string;
+  confidenceScore?: number;
+  logs?: any[];
+}
+
+export default function ReportGenerator({ 
+  fileName = 'svchost_update.exe',
+  threatLevel = 'High Threat',
+  confidenceScore = 98,
+  logs = []
+}: ReportGeneratorProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const generateReport = (type: 'pdf' | 'json') => {
@@ -12,17 +25,32 @@ export default function ReportGenerator() {
     // Simulate generation time
     setTimeout(() => {
       setLoading(null);
-      // In a real app, this would trigger a download from the backend
-      const dummyData = type === 'json' ? '{"status": "success", "report": "Aegis Sandbox Full Telemetry"}' : 'Aegis Sandbox PDF Binary Data';
-      const blob = new Blob([dummyData], { type: type === 'json' ? 'application/json' : 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Aegis_Sandbox_Report_invoice_7781.${type}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (type === 'pdf') {
+        downloadReport(fileName, threatLevel, confidenceScore, logs);
+      } else {
+        const reportData = {
+          status: 'success',
+          analysisDate: new Date().toISOString(),
+          targetFile: fileName,
+          aiVerdict: threatLevel,
+          confidenceScore: confidenceScore,
+          telemetryLogs: logs.length > 0 ? logs : [
+            { type: 'info', text: 'File opened in isolated environment' },
+            { type: 'warning', text: 'Process attempted to access system registry keys' },
+            { type: 'danger', text: 'Suspicious payload delivery network request blocked' },
+            { type: 'danger', text: 'Mass file modification patterns detected in user directory' }
+          ]
+        };
+        const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Aegis_Sandbox_Report_${fileName}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     }, 1500);
   };
 

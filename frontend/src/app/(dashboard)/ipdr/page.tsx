@@ -66,21 +66,27 @@ export default function IPDRPage() {
   };
 
   const analysisData = React.useMemo(() => {
-    const freq: Record<string, number> = {};
+    const freq: Record<string, { count: number, ips: Set<string> }> = {};
     filteredRecords.forEach(r => {
       const dest = r.destination_number;
       if (dest) {
-        freq[dest] = (freq[dest] || 0) + 1;
+        if (!freq[dest]) freq[dest] = { count: 0, ips: new Set() };
+        freq[dest].count++;
+        if (r.destination_ip) freq[dest].ips.add(r.destination_ip);
       }
     });
     const topContacts = Object.entries(freq)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 4)
-      .map(([number, calls], i) => ({ 
-        number, 
-        calls, 
-        label: i === 0 ? 'Most contacted' : 'Contact' 
-      }));
+      .map(([number, data], i) => {
+        const ipString = data.ips.size > 0 ? Array.from(data.ips).join(', ') : '';
+        return { 
+          number, 
+          calls: data.count, 
+          ips: ipString,
+          label: i === 0 ? 'Most contacted' : 'Contact' 
+        };
+      });
     const maxCalls = topContacts.length > 0 ? topContacts[0].calls : 1;
 
     const sorted = [...filteredRecords].sort((a, b) => new Date(a.start_time || 0).getTime() - new Date(b.start_time || 0).getTime());
@@ -169,14 +175,16 @@ export default function IPDRPage() {
         
         headers.forEach((header, index) => {
           const val = values[index];
-          if (header.includes('source') || header === 'src') record.source_number = val;
-          if (header.includes('dest') || header === 'dst') record.destination_number = val;
-          if (header.includes('type')) record.call_type = val;
-          if (header.includes('start') || header === 'timestamp') record.start_time = val;
-          if (header.includes('duration')) record.duration_seconds = parseInt(val) || 0;
-          if (header.includes('cell')) record.cell_id = val;
-          if (header.includes('loc')) record.cell_location = val;
-          if (header.includes('imei')) record.imei = val;
+          if (header.includes('source_ip') || header === 'src_ip') record.source_ip = val;
+          else if (header.includes('dest_ip') || header === 'dst_ip') record.destination_ip = val;
+          else if (header.includes('source') || header === 'src') record.source_number = val;
+          else if (header.includes('dest') || header === 'dst') record.destination_number = val;
+          else if (header.includes('type')) record.call_type = val;
+          else if (header.includes('start') || header === 'timestamp') record.start_time = val;
+          else if (header.includes('duration')) record.duration_seconds = parseInt(val) || 0;
+          else if (header.includes('cell')) record.cell_id = val;
+          else if (header.includes('loc')) record.cell_location = val;
+          else if (header.includes('imei')) record.imei = val;
         });
         
         // Fallbacks if mapping failed
@@ -220,37 +228,98 @@ export default function IPDRPage() {
       return;
     }
 
-    let report = `IPDR Analyzer Summary Report\n`;
-    report += `Generated: ${new Date().toLocaleString()}\n`;
-    report += `==========================================\n\n`;
+    const uniqueIPs = new Set(filteredRecords.flatMap(r => [r.source_ip, r.destination_ip]).filter(Boolean));
     
-    report += `--- Overview ---\n`;
-    report += `Total Records: ${callStats.total}\n`;
-    report += `Unique Numbers: ${callStats.uniqueNumbers}\n`;
-    report += `Total Duration: ${Math.round(callStats.totalDuration / 60)} minutes\n`;
-    report += `Late Night Calls: ${callStats.lateNightCalls}\n\n`;
-
-    report += `--- Suspicious Patterns ---\n`;
-    analysisData.patterns.forEach(p => {
-      report += `[${p.risk.toUpperCase()}] ${p.pattern}\n`;
-      report += `  Details: ${p.details}\n\n`;
+    // Map every number to its IPs
+    const numberToIPs: Record<string, Set<string>> = {};
+    filteredRecords.forEach(r => {
+      if (r.source_number) {
+        if (!numberToIPs[r.source_number]) numberToIPs[r.source_number] = new Set();
+        if (r.source_ip) numberToIPs[r.source_number].add(r.source_ip);
+      }
+      if (r.destination_number) {
+        if (!numberToIPs[r.destination_number]) numberToIPs[r.destination_number] = new Set();
+        if (r.destination_ip) numberToIPs[r.destination_number].add(r.destination_ip);
+      }
     });
 
-    report += `--- Top Contacts ---\n`;
-    analysisData.topContacts.forEach(c => {
-      report += `${c.number} - ${c.calls} calls (${c.label})\n`;
-    });
+    const timestamp = new Date().getTime();
+    const dateStr = new Date().toLocaleString();
+    const totalDurationMins = Math.round(callStats.totalDuration / 60);
+
+    let report = `================================================================================\n`;
+    report += `          AEGIS CYBER INVESTIGATION & INTELLIGENCE PLATFORM (CIIP)\n`;
+    report += `                      IPDR FORENSIC ANALYSIS BRIEF\n`;
+    report += `================================================================================\n`;
+    report += `Generated On   : ${dateStr}\n`;
+    report += `Reference ID   : CIIP-IPDR-${timestamp}\n`;
+    report += `Classification : CONFIDENTIAL / FOR OFFICIAL USE ONLY\n`;
+    report += `================================================================================\n\n`;
     
-    report += `\n--- Recent Cell Tower Movements ---\n`;
-    report += analysisData.recentMovements.length > 0 
-      ? analysisData.recentMovements.join(' -> ') + '\n'
-      : 'No cell tower data available.\n';
+    report += `1. EXECUTIVE SUMMARY\n`;
+    report += `--------------------------------------------------------------------------------\n`;
+    report += `This report summarizes the communication telemetry and network resolution data \n`;
+    report += `extracted from the provided IP Detail Records (IPDR). The dataset comprises \n`;
+    report += `${callStats.total} total communication events across ${callStats.uniqueNumbers} unique telephony entities. \n`;
+    report += `A total of ${uniqueIPs.size} distinct IP addresses were resolved during analysis.\n`;
+    report += `Cumulative communication duration is ${totalDurationMins} minutes, with ${callStats.lateNightCalls} events \n`;
+    report += `occurring outside standard operating hours.\n\n`;
+
+    report += `2. THREAT & BEHAVIORAL PATTERNS\n`;
+    report += `--------------------------------------------------------------------------------\n`;
+    if (analysisData.patterns.length > 0) {
+      analysisData.patterns.forEach(p => {
+        report += `[!] Severity: ${p.risk.toUpperCase()} | Type: ${p.pattern}\n`;
+        report += `    Details: ${p.details}\n\n`;
+      });
+    } else {
+      report += `[i] No anomalous behavioral patterns detected within the current dataset.\n\n`;
+    }
+
+    report += `3. PRIMARY TARGETS / FREQUENT CONTACTS\n`;
+    report += `--------------------------------------------------------------------------------\n`;
+    if (analysisData.topContacts.length > 0) {
+      analysisData.topContacts.forEach(c => {
+        const ipText = c.ips ? c.ips : 'Unresolved';
+        report += `- Entity ID  : ${c.number}\n`;
+        report += `  Network IPs: ${ipText}\n`;
+        report += `  Engagement : ${c.calls} interactions (${c.label})\n\n`;
+      });
+    } else {
+      report += `[i] Insufficient data to determine primary communication targets.\n\n`;
+    }
+
+    report += `4. GEOSPATIAL INTELLIGENCE (CELL TOWER TRAJECTORY)\n`;
+    report += `--------------------------------------------------------------------------------\n`;
+    if (analysisData.recentMovements.length > 0) {
+      report += `Recent movement trajectory indicates transitions across the following sectors:\n`;
+      report += `[ ${analysisData.recentMovements.join('  >>>  ')} ]\n\n`;
+    } else {
+      report += `[i] No definitive spatial movement or cell tower handoffs detected.\n\n`;
+    }
+
+    report += `5. COMPREHENSIVE ENTITY-TO-IP RESOLUTION DIRECTORY\n`;
+    report += `--------------------------------------------------------------------------------\n`;
+    report += `The following index maps all extracted telephony endpoints to their correlated \n`;
+    report += `network addresses (IPv4/IPv6) observed during the collection window.\n\n`;
+    
+    Object.entries(numberToIPs)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach(([num, ips]) => {
+        const ipStr = ips.size > 0 ? Array.from(ips).join(', ') : 'N/A';
+        report += `[+] Entity: ${num}\n`;
+        report += `    Resolved IPs: ${ipStr}\n\n`;
+      });
+
+    report += `================================================================================\n`;
+    report += `                         *** END OF FORENSIC BRIEF ***\n`;
+    report += `================================================================================\n`;
 
     const blob = new Blob([report], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `IPDR_Summary_Report_${new Date().getTime()}.txt`;
+    a.download = `CIIP_IPDR_Forensic_Brief_${timestamp}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

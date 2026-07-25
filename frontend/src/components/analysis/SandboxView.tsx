@@ -8,7 +8,18 @@ import { downloadReport } from '@/lib/report-generator';
 
 type ThreatLevel = 'Safe' | 'Suspicious' | 'High Threat';
 
-export default function SandboxView() {
+export interface SandboxViewProps {
+  onAnalysisStart?: (fileName: string, fileSize: number) => void;
+  onAnalysisComplete?: (data: {
+    fileName: string;
+    fileSize: number;
+    threatLevel: ThreatLevel;
+    confidenceScore: number;
+    logs: any[];
+  }) => void;
+}
+
+export default function SandboxView({ onAnalysisStart, onAnalysisComplete }: SandboxViewProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [logs, setLogs] = useState<{time: string, text: string, type: 'info' | 'warning' | 'danger'}[]>([]);
@@ -53,7 +64,18 @@ export default function SandboxView() {
 
     const nameWithoutExt = fileName.split('.').slice(0, -1).join('.');
     const isHashName = /^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$/.test(nameWithoutExt);
-    const isMalicious = /malware|payload|virus|ransom|eicar|exploit/i.test(fileName) || isHashName;
+    const isHighThreat = /malware|payload|virus|ransom|eicar|exploit|wannacry|lockbit|blackcat|svchost|crypt|dark/i.test(fileName) || isHashName;
+    const isSuspicious = /invoice|update|crack|keygen|patch|admin|tool/i.test(fileName);
+
+    // Generate a pseudo-random variance (-4 to +4) based on filename
+    const pseudoRandom = (str: string) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return Math.abs(hash);
+    };
+    const variance = (pseudoRandom(fileName) % 9) - 4;
 
     let logs = [];
     let threat: ThreatLevel = 'Safe';
@@ -61,9 +83,9 @@ export default function SandboxView() {
 
     // MZ header (Executable)
     if (magicBytes.startsWith('4D5A')) {
-      if (isMalicious) {
+      if (isHighThreat) {
         threat = 'High Threat';
-        score = 98;
+        score = Math.min(99, Math.max(90, 95 + variance));
         logs = [
           ...baseLogs,
           { text: "Actual executable format confirmed (MZ Header spoofing check passed).", type: "warning" },
@@ -76,9 +98,19 @@ export default function SandboxView() {
           { text: "Ransom note dropped: READ_ME_NOW.txt", type: "danger" },
           { text: "Execution halted by sandbox time limit.", type: "info" }
         ];
+      } else if (isSuspicious) {
+        threat = 'Suspicious';
+        score = Math.min(89, Math.max(50, 65 + variance));
+        logs = [
+          ...baseLogs,
+          { text: "Actual executable format confirmed (MZ Header).", type: "info" },
+          { text: "Process executed with elevated privileges.", type: "warning" },
+          { text: "Unrecognized binary signature. Heuristics suggest potential adware/PUP.", type: "warning" },
+          { text: "Execution completed normally. Monitoring recommended.", type: "info" }
+        ];
       } else {
         threat = 'Safe';
-        score = 12;
+        score = Math.max(1, 12 + variance);
         logs = [
           ...baseLogs,
           { text: "Actual executable format confirmed (MZ Header).", type: "info" },
@@ -90,9 +122,9 @@ export default function SandboxView() {
     } 
     // PDF header
     else if (magicBytes.startsWith('25504446')) {
-      if (isMalicious) {
+      if (isHighThreat) {
         threat = 'High Threat';
-        score = 85;
+        score = Math.min(99, Math.max(80, 85 + variance));
         logs = [
           ...baseLogs,
           { text: "Actual PDF format confirmed.", type: "info" },
@@ -103,9 +135,20 @@ export default function SandboxView() {
           { text: "Process terminated unexpectedly.", type: "info" },
           { text: "Execution halted.", type: "info" }
         ];
+      } else if (isSuspicious) {
+        threat = 'Suspicious';
+        score = Math.min(79, Math.max(40, 55 + variance));
+        logs = [
+          ...baseLogs,
+          { text: "Actual PDF format confirmed.", type: "info" },
+          { text: "Application launched (AcroRd32.exe)", type: "info" },
+          { text: "Document contains obfuscated macros.", type: "warning" },
+          { text: "Macro execution blocked by policy.", type: "info" },
+          { text: "Execution halted.", type: "info" }
+        ];
       } else {
         threat = 'Safe';
-        score = 5;
+        score = Math.max(1, 5 + Math.max(0, variance));
         logs = [
           ...baseLogs,
           { text: "Actual PDF format confirmed.", type: "info" },
@@ -117,9 +160,9 @@ export default function SandboxView() {
     } 
     // ZIP / Office Open XML (DOCX, XLSX) or Legacy Office (DOC)
     else if (magicBytes.startsWith('504B0304') || magicBytes.startsWith('D0CF11E0')) {
-      if (isMalicious) {
+      if (isHighThreat) {
         threat = 'High Threat';
-        score = 92;
+        score = Math.min(99, Math.max(85, 92 + variance));
         const isZip = fileName.toLowerCase().endsWith('.zip') || fileName.toLowerCase().endsWith('.rar');
         logs = [
           ...baseLogs,
@@ -130,9 +173,19 @@ export default function SandboxView() {
           { text: "Network connection attempt blocked to known C2 server.", type: "danger" },
           { text: "Execution halted by sandbox defense mechanisms.", type: "info" }
         ];
+      } else if (isSuspicious) {
+        threat = 'Suspicious';
+        score = Math.min(84, Math.max(45, 65 + variance));
+        logs = [
+          ...baseLogs,
+          { text: "Actual Office Document format confirmed.", type: "info" },
+          { text: "Application launched (WinWord.exe)", type: "info" },
+          { text: "Document contains external remote template injection link.", type: "warning" },
+          { text: "Network request blocked.", type: "info" }
+        ];
       } else {
         threat = 'Safe';
-        score = 8;
+        score = Math.max(1, 8 + variance);
         logs = [
           ...baseLogs,
           { text: "Actual Archive/Office Document format confirmed.", type: "info" },
@@ -145,7 +198,7 @@ export default function SandboxView() {
     // Safe formats (Images, Text, etc) or unknown
     else {
       threat = 'Safe';
-      score = 1;
+      score = Math.max(1, 2 + (Math.abs(variance) % 4));
       logs = [
         ...baseLogs,
         { text: "Non-executable or generic file format detected.", type: "info" },
@@ -165,6 +218,10 @@ export default function SandboxView() {
     setIsCompleted(false);
     setAnalystVerdict(null);
     setLogs([]);
+    
+    if (onAnalysisStart) {
+      onAnalysisStart(fileName, file.size);
+    }
     
     // Read the first 4 bytes of the file for actual content detection
     const magicBytes = await getMagicBytes(file);
@@ -199,6 +256,16 @@ export default function SandboxView() {
           confidenceScore: mockData.score,
           timestamp: new Date().toLocaleString()
         }, ...prev]);
+
+        if (onAnalysisComplete) {
+          onAnalysisComplete({
+            fileName,
+            fileSize: file.size,
+            threatLevel: mockData.threat,
+            confidenceScore: mockData.score,
+            logs: mockData.logs
+          });
+        }
 
         toast.success(`Sandbox analysis complete for ${fileName}`);
       }
