@@ -1,6 +1,11 @@
 # CIIP (Cyber Intelligence and Investigation Platform)
 
-A comprehensive platform for cyber intelligence and investigation.
+A comprehensive, all-in-one digital forensics platform designed for law enforcement and authorized investigators.
+
+## 🚀 Quick Overview
+
+*   **Practical (What it does):** Combines OSINT (public data gathering), IPDR (suspect tracking), and Ransomware analysis into one dashboard. It uses AI to write reports automatically and securely hashes all evidence to maintain a legal chain of custody. 
+*   **Technical (How it's built):** Built with a modern **Next.js/React** frontend and a fast **Python FastAPI** backend. Data is secured in a **PostgreSQL** database with tamper-proof audit trails, and the whole system is easily deployed anywhere using **Docker**.
 
 ## Features
 
