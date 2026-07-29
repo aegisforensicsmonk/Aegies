@@ -1,0 +1,484 @@
+/* Modern Cybersecurity Theme (AEGIS Dashboard Match) */
+:root {
+  --bg-dark: #0b1120; /* Deep charcoal/navy matching AEGIS background */
+  --bg-card: rgba(15, 23, 42, 0.7); /* Slate transparent */
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent-teal: #00d4ff; /* Cyan/Teal matching active AEGIS sidebar */
+  --accent-teal-hover: #00b4d8;
+  --accent-navy: #1e293b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --status-finished: #10b981;
+  --status-running: #3b82f6;
+  --status-queued: #6b7280;
+  
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: transparent !important;
+  color: var(--text-main);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ensure the iframe/body has no background to let parent wrapper shine through if needed, 
+   but providing a fallback matching the wrapper */
+html {
+  background-color: var(--bg-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+a {
+  color: var(--accent-teal);
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--accent-teal-hover);
+  text-decoration: none;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+/* Navbar overrides */
+.navbar-default {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-default .navbar-brand, .navbar-default .navbar-nav>li>a {
+  color: var(--text-main) !important;
+  font-weight: 500;
+  font-family: var(--font-family);
+}
+
+.navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>.active>a {
+  color: var(--accent-teal) !important;
+  background: transparent !important;
+}
+
+/* Sidebar layout */
+.main-layout {
+  display: flex;
+  min-height: calc(100vh - 70px);
+  margin-top: 70px; /* Offset for fixed navbar */
+}
+
+.sidebar {
+  width: 250px;
+  border-right: 1px solid var(--border-color);
+  padding: 20px;
+  display: none; /* Shown conditionally on some pages */
+  background: transparent;
+}
+
+.main-content {
+  flex: 1;
+  padding: 30px;
+}
+
+/* Buttons */
+.btn-primary, .btn-info {
+  background-color: var(--accent-teal);
+  border-color: var(--accent-teal);
+  color: #000;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover, .btn-info:hover {
+  background-color: var(--accent-teal-hover);
+  border-color: var(--accent-teal-hover);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  border-color: #ef4444;
+  font-weight: 600;
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 6px 10px;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+
+/* Tables */
+.table {
+  color: var(--text-main);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table>thead>tr>th {
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  padding: 12px 8px;
+}
+
+.table>tbody>tr>td {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 8px;
+  vertical-align: middle;
+}
+
+.table-striped>tbody>tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.table-hover>tbody>tr:hover {
+  background-color: rgba(0, 212, 255, 0.05);
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+}
+
+.status-badge::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-finished {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--status-finished);
+}
+.status-finished::before { background: var(--status-finished); }
+
+.status-running {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--status-running);
+  animation: none;
+}
+.status-running::before {
+  background: var(--status-running);
+  animation: pulse 1.5s infinite;
+}
+
+.status-queued {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--status-queued);
+}
+.status-queued::before { background: var(--status-queued); }
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.5; }
+}
+
+/* Forms & Floating Labels */
+.form-control {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+}
+
+.form-control:focus {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+  color: var(--text-main);
+}
+
+.floating-label-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.floating-label-group input {
+  height: 48px;
+  padding: 16px 12px 4px;
+}
+
+.floating-label-group label {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  color: var(--text-muted);
+  font-weight: normal;
+  transition: all 0.2s ease-out;
+  pointer-events: none;
+  text-transform: none;
+}
+
+.floating-label-group input:focus + label,
+.floating-label-group input:not(:placeholder-shown) + label {
+  top: 4px;
+  font-size: 11px;
+  color: var(--accent-teal);
+}
+
+/* Scan Mode Cards */
+.scan-mode-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(255,255,255,0.02);
+  height: 100%;
+}
+
+.scan-mode-card:hover {
+  border-color: rgba(0, 212, 255, 0.4);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.scan-mode-card input[type="radio"] {
+  display: none;
+}
+
+.scan-mode-card.selected {
+  border-color: var(--accent-teal);
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+}
+
+.scan-mode-icon {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: var(--accent-teal);
+}
+
+.scan-mode-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-transform: none;
+}
+
+.scan-mode-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Tabs */
+.nav-tabs>li>a {
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  text-transform: none;
+}
+
+.nav-tabs>li>a:hover, .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-teal);
+  color: var(--accent-teal);
+  text-shadow: none;
+}
+
+.nav-pills>li>a {
+  color: var(--text-muted);
+  text-transform: none;
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus {
+  background-color: rgba(0, 212, 255, 0.1);
+  color: var(--accent-teal);
+  border-left: 3px solid var(--accent-teal);
+  border-radius: 0 4px 4px 0;
+  box-shadow: none;
+}
+
+/* Utility */
+.action-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.modern-search {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 4px 16px;
+  color: white;
+  width: 250px;
+  font-family: var(--font-family);
+}
+
+.modern-search:focus {
+  outline: none;
+  border-color: var(--accent-teal);
+  box-shadow: none;
+}
+
+/* Overrides for legacy Bootstrap components */
+.panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: var(--text-main);
+}
+.panel-default > .panel-heading {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--accent-teal);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  text-transform: none;
+}
+.panel-default {
+  border-color: var(--border-color);
+}
+.well {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 4px;
+}
+.alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.2);
+  border-radius: 4px;
+}
+.alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+}
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+  border-radius: 4px;
+}
+.alert-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.2);
+  border-radius: 4px;
+  box-shadow: none;
+}
+/* Ensure text inside standard panels/alerts is readable */
+.panel-body, .alert, .badge {
+  color: var(--text-main);
+}
+.badge {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 10px;
+}
+
+/* Fix Default Buttons */
+.btn-default {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.btn-default:hover, .btn-default:focus, .btn-default.active {
+  background-color: rgba(0, 212, 255, 0.1) !important;
+  border-color: var(--accent-teal) !important;
+  color: var(--accent-teal) !important;
+  box-shadow: none;
+}
+
+/* Fix Status Buttons (High/Medium/Low/Info) in Correlation Box */
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: transparent !important;
+  color: var(--text-main) !important;
+  border-radius: 4px;
+}
+.btn-danger.disabled, .btn-danger[disabled] {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: transparent !important;
+  color: #ef4444 !important;
+  opacity: 1;
+  border-radius: 4px;
+}
+.btn-warning.disabled, .btn-warning[disabled] {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  border-color: transparent !important;
+  color: #f59e0b !important;
+  opacity: 1;
+  border-radius: 4px;
+}
+.btn-primary.disabled, .btn-primary[disabled] {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-color: transparent !important;
+  color: #3b82f6 !important;
+  opacity: 1;
+  border-radius: 4px;
+}
+.btn-success.disabled, .btn-success[disabled] {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  border-color: transparent !important;
+  color: #10b981 !important;
+  opacity: 1;
+  border-radius: 4px;
+}
+
+/* Ensure table text is clearly visible and blue */
+.table td, .table th, table, .table pre, .table-border-bg-inherit {
+  color: #00d4ff !important;
+}

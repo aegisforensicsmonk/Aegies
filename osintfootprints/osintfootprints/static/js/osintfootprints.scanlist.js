@@ -155,40 +155,8 @@ function showlisttable(types, filter, data) {
     if (filter == null) {
         filter = "None";
     }
-    var buttons = "<div class='btn-toolbar'>";
-    buttons += "<div class='btn-group'>";
-    buttons += "<button id='btn-filter' class='btn btn-default'><i class='glyphicon glyphicon-filter'></i>&nbsp;Filter: " + filter + "</button>";
-    buttons += "<button class='btn dropdown-toggle btn-default' data-toggle='dropdown'><span class='caret'></span></button>";
-    buttons += "<ul class='dropdown-menu'>";
-    buttons += "<li><a href='javascript:filter(\"all\")'>None</a></li>";
-    buttons += "<li><a href='javascript:filter(\"running\")'>Running</a></li>";
-    buttons += "<li><a href='javascript:filter(\"finished\")'>Finished</a></li>";
-    buttons += "<li><a href='javascript:filter(\"failed\")'>Failed/Aborted</a></li></ul>";
-    buttons += "</div>";
-
-    buttons += "<div class='btn-group pull-right'>";
-    buttons += "<button rel='tooltip' data-title='Delete Selected' id='btn-delete' class='btn btn-default btn-danger'><i class='glyphicon glyphicon-trash glyphicon-white'></i></button>";
-    buttons += "</div>";
-
-    buttons += "<div class='btn-group pull-right'>";
-    buttons += "<button rel='tooltip' data-title='Refresh' id='btn-refresh' class='btn btn-default btn-success'><i class='glyphicon glyphicon-refresh glyphicon-white'></i></a>";
-    buttons += "<button rel='tooltip' data-toggle='dropdown' data-title='Export Selected' id='btn-export' class='btn btn-default btn-success dropdown-toggle download-button'><i class='glyphicon glyphicon-download-alt glyphicon-white'></i></button>";
-    buttons += "<ul class='dropdown-menu'>";
-    buttons += "<li><a href='javascript:exportSelected(\"csv\")'>CSV</a></li>";
-    buttons += "<li><a href='javascript:exportSelected(\"excel\")'>Excel</a></li>";
-    buttons += "<li><a href='javascript:exportSelected(\"gexf\")'>GEXF</a></li>";
-    buttons += "<li><a href='javascript:exportSelected(\"json\")'>JSON</a></li>";
-    buttons += "</ul>";
-    buttons += "</div>";
-
-    buttons += "<div class='btn-group pull-right'>";
-    buttons += "<button rel='tooltip' data-title='Re-run Selected' id='btn-rerun' class='btn btn-default'><i class='glyphicon glyphicon-repeat glyphicon-white'></i></button>";
-    buttons += "<button rel='tooltip' data-title='Stop Selected' id='btn-stop' class='btn btn-default'>";
-    buttons += "<i class='glyphicon glyphicon-stop glyphicon-white'></i></button>";
-    buttons += "</div>";
-
-    buttons += "</div>";
-    var table = "<table id='scanlist' class='table table-bordered table-striped'>";
+    var buttons = "";
+    var table = "<table id='scanlist' class='table table-hover'>";
     table += "<thead><tr><th class='sorter-false text-center'><input id='checkall' type='checkbox'></th> <th>Name</th> <th>Target</th> <th>Started</th> <th >Finished</th> <th class='text-center'>Status</th> <th class='text-center'>Elements</th><th class='text-center'>Correlations</th><th class='sorter-false text-center'>Action</th> </tr></thead><tbody>";
     filtered = 0;
     for (var i = 0; i < data.length; i++) {
@@ -202,20 +170,15 @@ function showlisttable(types, filter, data) {
         table += "<td>" + data[i][3] + "</td>";
         table += "<td>" + data[i][5] + "</td>";
 
-        var statusy = "";
-
+        var statusClass = "status-queued";
         if (data[i][6] == "FINISHED") {
-            statusy = "alert-success";
-        } else if (data[i][6].indexOf("ABORT") >= 0) {
-            statusy = "alert-warning";
+            statusClass = "status-finished";
+        } else if (data[i][6].indexOf("ABORT") >= 0 || data[i][6].indexOf("FAILED") >= 0) {
+            statusClass = "status-queued";
         } else if (data[i][6] == "CREATED" || data[i][6] == "RUNNING" || data[i][6] == "STARTED" || data[i][6] == "STARTING" || data[i][6] == "INITIALIZING") {
-            statusy = "alert-info";
-        } else if (data[i][6].indexOf("FAILED") >= 0) {
-            statusy = "alert-danger";
-        } else {
-            statusy = "alert-info";
+            statusClass = "status-running";
         }
-        table += "<td class='text-center'><span class='badge " + statusy + "'>" + data[i][6] + "</span></td>";
+        table += "<td class='text-center'><span class='status-badge " + statusClass + "'>" + data[i][6] + "</span></td>";
         table += "<td class='text-center'>" + data[i][7] + "</td>";
         table += "<td class='text-center'>";
         table += "<span class='badge alert-danger'>" + data[i][8]['HIGH'] + "</span>";
@@ -283,11 +246,24 @@ function showlisttable(types, filter, data) {
             lastChecked = this;
         });
 
-        $("#btn-delete").click(function() { deleteSelected(); });
-        $("#btn-refresh").click(function() { reload(); });
-        $("#btn-rerun").click(function() { rerunSelected(); });
-        $("#btn-stop").click(function() { stopSelected(); });
+        $("#top-btn-delete, #sidebar-btn-delete").click(function() { deleteSelected(); });
+        $("#top-btn-refresh").click(function() { reload(); });
+        $("#sidebar-btn-export").click(function() { exportSelected("csv"); });
         $("#checkall").click(function() { switchSelectAll(); });
+        
+        // Active state for sidebar
+        $("#sidebar-filters li").click(function() {
+            $("#sidebar-filters li").removeClass("active");
+            $(this).addClass("active");
+        });
+        
+        // Search functionality
+        $("#scan-search").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#scanlist tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
     });
 }
 

@@ -1,86 +1,140 @@
 <%include file="HEADER.tmpl"/>
 <script src="${docroot}/static/js/osintfootprints.newscan.js"></script>
-<h2>New Scan</h2>
-<div style='padding-top: 20px'>
-<form class="form" action='${docroot}/startscan' method='POST'>
-<div class='col-sm-3' style='padding: 0'>
-    <label for="scanname">Scan Name</label>
-    <div class="input-group" style='padding-bottom: 10px'>
-        <input class='form-control' type="text" id="scanname" name="scanname" value="${scanname}" placeholder="The name of this scan.">
-    </div>
-    <label for="scantarget">Scan Target</label>
-    <div class="input-group">
-        <input class='form-control' type="text" value="${scantarget}" id="scantarget" name="scantarget" placeholder="The target of your scan.">
-    </div>
-</div>
 
+<div class="glass-card" style="max-width:900px; margin: 0 auto;">
+  <h2 style="margin-top:0; margin-bottom:20px; color:var(--accent-teal);">New Scan</h2>
+  
+  <form class="form" action='${docroot}/startscan' method='POST'>
+    
+    <!-- Floating Labels for Name & Target -->
+    <div class="row" style="margin-bottom:30px;">
+      <div class="col-md-6">
+        <div class="floating-label-group">
+          <input class='form-control' type="text" id="scanname" name="scanname" value="${scanname}" placeholder=" " required>
+          <label for="scanname">Scan Name</label>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="floating-label-group">
+          <input class='form-control' type="text" value="${scantarget}" id="scantarget" name="scantarget" placeholder=" " required>
+          <label for="scantarget">Scan Target</label>
+        </div>
+      </div>
+    </div>
 
+    <!-- Scan Modes Tabs -->
     <div class="control-group">
-        <ul class='nav nav-tabs'>
+      <ul class='nav nav-tabs' style="margin-bottom:20px;">
         <li id='usetab' class="active"><a href='#'>By Use Case</a></li>
         <li id='typetab'><a href='#'>By Required Data</a></li>
         <li id='moduletab'><a href='#'>By Module</a></li>
-        <div class='btn-group-sm pull-right' role="group" id='selectors' style='display: none'>
-        <button id="btn-select-all" type="button" class="btn btn-info">Select All</button>&nbsp;&nbsp;
-        <button id="btn-deselect-all" type="button" class="btn btn-info">De-Select All</button>
+        <div class='btn-group-sm pull-right' role="group" id='selectors' style='display: none; margin-top:5px;'>
+          <button id="btn-select-all" type="button" class="btn btn-info">Select All</button>&nbsp;&nbsp;
+          <button id="btn-deselect-all" type="button" class="btn btn-info" style="background:#ef4444;border-color:#ef4444;">De-Select All</button>
         </div>
-        </ul>
-        <table class="table table-striped table-condensed" id="usetable">
-            <tr><td style='width: 50px'><input type=radio name='usecase' value='all' id="usecase_all" checked></td><td>All</td><td><b>Get anything and everything about the target.</b><br><br>All OSINTFOOTPRINTS modules will be enabled (slow) but every possible piece of information about the target will be obtained and analysed.<br><br></td></tr>
-            <tr><td style='width: 50px'><input type=radio name='usecase' value='Footprint' id="usecase_footprint"></td><td>Footprint</td><td><b>Understand what information this target exposes to the Internet.</b><br><br>Gain an understanding about the target's network perimeter, associated identities and other information that is obtained through a lot of web crawling and search engine use.
-             <br><br></td></tr>
-            <tr><td style='width: 50px'><input type=radio name='usecase' value='Investigate' id="usecase_investigate"></td><td>Investigate</td><td><b>Best for when you suspect the target to be malicious but need more information.</b><br><br>Some basic footprinting will be performed in addition to querying of blacklists and other sources that may have information about your target's maliciousness.
-            <br><br></td></tr>
-            <tr><td style='width: 50px'><input type=radio name='usecase' value='Passive' id="usecase_passive"></td><td>Passive</td><td><b>When you don't want the target to even suspect they are being investigated.</b><br><br>As much information will be gathered without touching the target or their affiliates, therefore only modules that do not touch the target will be enabled.
+      </ul>
 
-        </td></tr>
-        </table>
+      <!-- By Use Case Cards -->
+      <div id="usetable">
+        <div class="row">
+          <div class="col-sm-6 col-md-3" style="margin-bottom:15px;">
+            <label class="scan-mode-card" for="usecase_all">
+              <input type="radio" name="usecase" value="all" id="usecase_all" checked>
+              <i class="glyphicon glyphicon-globe scan-mode-icon"></i>
+              <div class="scan-mode-title">All Modules</div>
+              <div class="scan-mode-desc">Get anything and everything about the target. Enables all modules.</div>
+            </label>
+          </div>
+          <div class="col-sm-6 col-md-3" style="margin-bottom:15px;">
+            <label class="scan-mode-card" for="usecase_footprint">
+              <input type="radio" name="usecase" value="Footprint" id="usecase_footprint">
+              <i class="glyphicon glyphicon-search scan-mode-icon"></i>
+              <div class="scan-mode-title">Footprint</div>
+              <div class="scan-mode-desc">Understand what information this target exposes to the Internet.</div>
+            </label>
+          </div>
+          <div class="col-sm-6 col-md-3" style="margin-bottom:15px;">
+            <label class="scan-mode-card" for="usecase_investigate">
+              <input type="radio" name="usecase" value="Investigate" id="usecase_investigate">
+              <i class="glyphicon glyphicon-eye-open scan-mode-icon"></i>
+              <div class="scan-mode-title">Investigate</div>
+              <div class="scan-mode-desc">Best for when you suspect the target to be malicious.</div>
+            </label>
+          </div>
+          <div class="col-sm-6 col-md-3" style="margin-bottom:15px;">
+            <label class="scan-mode-card" for="usecase_passive">
+              <input type="radio" name="usecase" value="Passive" id="usecase_passive">
+              <i class="glyphicon glyphicon-user scan-mode-icon"></i>
+              <div class="scan-mode-title">Passive</div>
+              <div class="scan-mode-desc">Gather info without touching the target. Undetectable.</div>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <script>
+        // Make the cards selectable by adding a class to the label when the radio is checked
+        $('input[name="usecase"]').change(function() {
+          $('.scan-mode-card').removeClass('selected');
+          if ($(this).is(':checked')) {
+            $(this).parent('.scan-mode-card').addClass('selected');
+          }
+        });
+        // Initial state
+        $('#usecase_all').parent('.scan-mode-card').addClass('selected');
+      </script>
 
-        <table class="table table-striped table-condensed" id="moduletable" style="display: none">
-            <%
-            modlist = dict()
-            for item in modules:
-                modlist[modules[item]['name']] = item
-            %>
-            % for it in sorted(modlist, key=lambda v: v.upper()):
-                <% item = modlist[it] %>
-                <% keylist = dict((k, v) for k, v in modules[item]['opts'].items() if not k.startswith('_')) %>
-                <% keyicon = "" %>
-                % if len(keylist) > 0:
-                    <% apikeylist = dict((k, v) for k, v in modules[item]['opts'].items() if k.find("api_key") >= 0) %>
-                    <%
-                    if len(apikeylist) > 0:
-                        keyicon = "&nbsp;&nbsp;<i class=\"glyphicon glyphicon-lock\" rel='tooltip' title='Needs API key'></i>"
-                    %>
-                % endif
+      <!-- By Module Table -->
+      <table class="table table-hover table-condensed" id="moduletable" style="display: none">
+          <%
+          modlist = dict()
+          for item in modules:
+              modlist[modules[item]['name']] = item
+          %>
+          % for it in sorted(modlist, key=lambda v: v.upper()):
+              <% item = modlist[it] %>
+              <% keylist = dict((k, v) for k, v in modules[item]['opts'].items() if not k.startswith('_')) %>
+              <% keyicon = "" %>
+              % if len(keylist) > 0:
+                  <% apikeylist = dict((k, v) for k, v in modules[item]['opts'].items() if k.find("api_key") >= 0) %>
+                  <%
+                  if len(apikeylist) > 0:
+                      keyicon = "&nbsp;&nbsp;<i class=\"glyphicon glyphicon-lock\" style=\"color:#f59e0b;\"></i>"
+                  %>
+              % endif
 
-                % if item != "sfp__stor_db" and item != "sfp__stor_stdout":
-                    <tr><td><input type=checkbox id="module_${item}" checked></td><td>${modules[item]['name']}${keyicon}</td><td>${modules[item]['descr']}</td></tr>
-                % endif
-            % endfor
-        </table>
-        <table class="table table-striped table-condensed" id="typetable" style="display: none">
-            <% count = 0 %>
-            % for item in sorted(types):
-                % if count % 2 == 0:
-                    <tr>
-                % endif
-                <td><input type=checkbox id="type_${item[1]}" checked></td><td>${item[0]}</td>
-                % if not count % 2 == 0:
-                    </tr>
-                % endif
-                <% count = count + 1 %>
-            % endfor
-        </table>
+              % if item != "sfp__stor_db" and item != "sfp__stor_stdout":
+                  <tr><td><input type=checkbox id="module_${item}" checked></td><td style="font-weight:600;">${modules[item]['name']}${keyicon}</td><td><span class="scan-mode-desc">${modules[item]['descr']}</span></td></tr>
+              % endif
+          % endfor
+      </table>
+
+      <!-- By Required Data Table -->
+      <table class="table table-hover table-condensed" id="typetable" style="display: none">
+          <% count = 0 %>
+          % for item in sorted(types):
+              % if count % 2 == 0:
+                  <tr>
+              % endif
+              <td><input type=checkbox id="type_${item[1]}" checked></td><td style="font-weight:600;">${item[0]}</td>
+              % if not count % 2 == 0:
+                  </tr>
+              % endif
+              <% count = count + 1 %>
+          % endfor
+      </table>
     </div>
+    
+    <hr style="border-color:rgba(255,255,255,0.1); margin: 30px 0;">
+
     <div class="control-group">
-        <div class="controls">
+        <div class="controls text-right">
             <input type=hidden id='modulelist' name='modulelist' value=''>
             <input type=hidden id='typelist' name='typelist' value=''>
-            <button id="btn-run-scan" class="btn btn-danger">Run Scan Now</button>
+            <button id="btn-run-scan" class="btn btn-primary" style="padding:10px 24px; font-size:16px;">Run Scan Now</button>
         </div>
     </div>
-</form>
+  </form>
 </div>
 
 <script type='text/javascript'>

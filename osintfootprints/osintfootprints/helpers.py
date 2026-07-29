@@ -505,10 +505,11 @@ class OsintFootprintsHelpers():
         ncounter = 0
         for pair in mapping:
             (dst, src) = pair
-            col = "#000"
+            col = "#1E90FF"
 
             # Leave out this special case
             if dst == "ROOT" or src == "ROOT":
+
                 continue
 
             if dst not in nodelist:
@@ -531,6 +532,7 @@ class OsintFootprintsHelpers():
             if src not in nodelist:
                 ncounter = ncounter + 1
 
+                col = "#1E90FF"
                 if src in root:
                     col = "#f00"
 

@@ -58,7 +58,8 @@ table pre {
 
 .table-border-bg-inherit {
   border: 0px;
-  background-color: inherit;
+  background-color: transparent !important;
+  color: #00d4ff !important;
 }
 
 .font-size-90-percent {
@@ -82,34 +83,41 @@ a.link:hover {
 }
 
 .dend-node circle {
-  fill: #fff;
-  stroke: steelblue;
+  fill: var(--bg-dark);
+  stroke: var(--accent-teal);
   stroke-width: 1.5px;
 }
 
 .dend-node {
-  font: 10px sans-serif;
+  font: 10px var(--font-family, sans-serif);
+  fill: var(--text-main);
 }
 
 .dend-link {
   fill: none;
-  stroke: #ccc;
+  stroke: var(--border-color);
   stroke-width: 1.5px;
 }
 
 .axis path,
 .axis line {
   fill: none;
-  stroke: #000;
+  stroke: #ffffff !important;
   shape-rendering: crispEdges;
 }
 
+.axis text {
+  fill: #ffffff !important;
+  font-weight: 500;
+  font-size: 12px;
+}
+
 .bar {
-  fill: #79a8d0;
+  fill: #1E90FF;
 }
 
 .bar:hover {
-  fill: #07aef1;
+  fill: #f00;
 }
 
 .x.axis path {

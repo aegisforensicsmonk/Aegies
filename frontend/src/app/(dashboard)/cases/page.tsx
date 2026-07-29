@@ -8,7 +8,7 @@ import {
   Calendar, Tag, Users, MoreHorizontal, X, MapPin, Sparkles, PenLine, UploadCloud, LayoutGrid, Map, Trash2
 } from 'lucide-react';
 import { cn, formatDate, getStatusColor, getSeverityIcon } from '@/lib/utils';
-import { mockEvidence, mockEntities, mockIOCs } from '@/data/mock-data';
+import { mockCases, mockEvidence, mockEntities, mockIOCs } from '@/data/mock-data';
 import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 
@@ -42,6 +42,10 @@ function CasesPageContent() {
   const [showNewCase, setShowNewCase] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [localEvidence, setLocalEvidence] = useState<any[]>(mockEvidence);
+  const [localEntities, setLocalEntities] = useState<any[]>(mockEntities);
+  const [localIOCs, setLocalIOCs] = useState<any[]>(mockIOCs);
+
   // Form State
   const [title, setTitle] = useState('');
   const [crimeType, setCrimeType] = useState('');
@@ -56,6 +60,15 @@ function CasesPageContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const savedEvidence = localStorage.getItem('evidence_list');
+    if (savedEvidence) setLocalEvidence(JSON.parse(savedEvidence));
+    
+    const savedEntities = localStorage.getItem('entities_list');
+    if (savedEntities) setLocalEntities(JSON.parse(savedEntities));
+    
+    const savedIOCs = localStorage.getItem('iocs_list');
+    if (savedIOCs) setLocalIOCs(JSON.parse(savedIOCs));
+
     const fetchCases = async () => {
       try {
         const response = await fetch('/api/v1/cases', { cache: 'no-store' });
@@ -188,7 +201,9 @@ function CasesPageContent() {
         // Save to evidence_list in local storage
         const savedEvidence = localStorage.getItem('evidence_list');
         const evList = savedEvidence ? JSON.parse(savedEvidence) : mockEvidence;
-        localStorage.setItem('evidence_list', JSON.stringify([newEvidence, ...evList]));
+        const newEvidenceList = [newEvidence, ...evList];
+        localStorage.setItem('evidence_list', JSON.stringify(newEvidenceList));
+        setLocalEvidence(newEvidenceList);
       }
 
       setShowNewCase(false);
@@ -432,22 +447,37 @@ function CasesPageContent() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 pt-4 border-t border-cyber-border">
-                <div className="text-center">
-                  <p className="text-lg font-bold text-cyber-text">{mockEvidence.filter(e => e.case_id === caseItem.id || e.case_id === caseItem.case_number).length}</p>
-                  <p className="text-[10px] text-cyber-muted uppercase tracking-wider">Evidence</p>
-                </div>
-                <div className="w-px h-8 bg-cyber-border" />
-                <div className="text-center">
-                  <p className="text-lg font-bold text-cyber-text">{mockEntities.filter(e => e.case_id === caseItem.id || e.case_id === caseItem.case_number).length}</p>
-                  <p className="text-[10px] text-cyber-muted uppercase tracking-wider">Entities</p>
-                </div>
-                <div className="w-px h-8 bg-cyber-border" />
-                <div className="text-center">
-                  <p className="text-lg font-bold text-cyber-text">{mockIOCs.filter(i => i.case_id === caseItem.id || i.case_id === caseItem.case_number).length}</p>
-                  <p className="text-[10px] text-cyber-muted uppercase tracking-wider">IOCs</p>
-                </div>
-              </div>
+              {(() => {
+                const mockCase = mockCases.find(m => m.case_number === caseItem.case_number);
+                const mockId = mockCase?.id;
+                
+                const newEvidenceForCase = localEvidence.filter(e => !mockEvidence.find(m => m.id === e.id) && (e.case_id === caseItem.id || e.case_id === caseItem.case_number || (mockId && e.case_id === mockId))).length;
+                const newEntitiesForCase = localEntities.filter(e => !mockEntities.find(m => m.id === e.id) && (e.case_id === caseItem.id || e.case_id === caseItem.case_number || (mockId && e.case_id === mockId))).length;
+                const newIOCsForCase = localIOCs.filter(i => !mockIOCs.find(m => m.id === i.id) && (i.case_id === caseItem.id || i.case_id === caseItem.case_number || (mockId && i.case_id === mockId))).length;
+                
+                const evCount = (caseItem.evidence_count ?? 0) + newEvidenceForCase;
+                const entCount = (caseItem.entity_count ?? 0) + newEntitiesForCase;
+                const iocCount = (caseItem.ioc_count ?? 0) + newIOCsForCase;
+
+                return (
+                  <div className="flex items-center gap-4 pt-4 border-t border-cyber-border">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-cyber-text">{evCount}</p>
+                      <p className="text-[10px] text-cyber-muted uppercase tracking-wider">Evidence</p>
+                    </div>
+                    <div className="w-px h-8 bg-cyber-border" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-cyber-text">{entCount}</p>
+                      <p className="text-[10px] text-cyber-muted uppercase tracking-wider">Entities</p>
+                    </div>
+                    <div className="w-px h-8 bg-cyber-border" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-cyber-text">{iocCount}</p>
+                      <p className="text-[10px] text-cyber-muted uppercase tracking-wider">IOCs</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </Link>
           ))}
           {filteredCases.length === 0 && (

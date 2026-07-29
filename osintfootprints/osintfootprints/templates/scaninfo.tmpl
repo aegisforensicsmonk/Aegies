@@ -19,7 +19,6 @@
       <a id='btn-status' class="btn btn-default" onClick='scanSummaryView("${id}")'><i class='glyphicon glyphicon-eye-open'></i>&nbsp;Summary</a>
       <a id='btn-correlations' class="btn btn-default" onClick='browseCorrelations("${id}")'><i class='glyphicon glyphicon-exclamation-sign'></i>&nbsp;Correlations</a>
       <a id='btn-browse' class="btn btn-default" onClick='browseEventList("${id}")'><i class='glyphicon glyphicon-th-list'></i>&nbsp;Browse</a>
-      <a id='btn-graph' class="btn btn-default" onClick='graphEvents("${id}")'><i class='glyphicon glyphicon-asterisk'></i>&nbsp;Graph</a>
       <a id='btn-info' class="btn btn-default" onClick='viewScanConfig("${id}")'><i class='glyphicon glyphicon-cog'></i>&nbsp;Scan Settings</a>
       <a id='btn-log' class="btn btn-default" onClick='viewScanLog("${id}")'><i class='glyphicon glyphicon-book'></i>&nbsp;Log</a>
     </div>
@@ -36,6 +35,7 @@
         <div class="btn-group pull-right" role="group">
             <button id='btn-refresh' rel="tooltip" title="Refresh" class="btn btn-success btn-default" onClick='refresh()'><i class='glyphicon glyphicon-refresh glyphicon glyphicon-white'></i></button>
             <button id='btn-download-logs' rel="tooltip" data-title="Download Scan Logs" class="btn btn-default download-button" onClick='downloadLogs("${id}")'><i class='glyphicon glyphicon-download-alt glyphicon glyphicon-white'></i></button>
+            <button id='btn-download-evidence' rel="tooltip" data-title="Download Evidence" class="btn btn-default download-button" onClick='downloadEvidence("${id}")'><i class='glyphicon glyphicon-briefcase glyphicon glyphicon-white'></i></button>
             <a id='btn-export' rel="tooltip" data-title="Export Data" class="btn btn-default dropdown-toggle download-button" data-toggle="dropdown"><i class='glyphicon glyphicon-download-alt glyphicon glyphicon-white'></i></a>
             <ul class="dropdown-menu">
               <li><a class='link' onClick='exportEventData("${id}", currentType, "csv")'>CSV</a></li>
@@ -250,8 +250,13 @@
                 sharedSigma = s;
                 s.settings({
                     edgeColor: 'default',
-                    defaultEdgeColor: '#aaa',
-                    maxNodeSize: 5
+                    defaultEdgeColor: '#888',
+                    minNodeSize: 2,
+                    maxNodeSize: 8,
+                    labelThreshold: 5,
+                    defaultLabelColor: '#ccc',
+                    labelColor: 'node',
+                    defaultEdgeType: 'curve'
                 });
                 sigma.plugins.dragNodes(s, s.renderers[0])
                 s.refresh()
@@ -899,6 +904,10 @@
         }
 
         refreshSummaryInterval = setInterval(refreshSummary, 5000);
+
+        function downloadEvidence(id) {
+            alertify.alert("Notice", "Evidence download functionality needs to be implemented on the backend.", function(){});
+        }
 
     </script>
 <iframe class="hidden" id='exportframe'></iframe>
